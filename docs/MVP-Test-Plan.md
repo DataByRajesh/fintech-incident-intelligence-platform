@@ -1,92 +1,147 @@
 # MVP Test Plan
 
-This test plan verifies the current Vite + React + TypeScript MVP for stability, data flow, and demo readiness. It intentionally excludes auth, AI, database, backend APIs, and new product scope.
+This test plan verifies the FinTech Operational Resilience & Incident Intelligence Platform MVP for recruiter demos and interview walkthroughs. It focuses on stability, data flow, validation, and silent-failure prevention.
 
 ## Test Environment
 
 - Browser: Chrome or Edge
-- Runtime: local Vite dev server
-- Command: `pnpm run dev`
+- App runtime: Vite dev server
+- Start command: `pnpm run dev`
 - Build check: `pnpm run build`
-- Data source: seeded demo incidents plus browser `localStorage`
+- Data source: demo incidents plus browser `localStorage`
 
-## Acceptance Criteria
+## Dashboard Tests
 
-1. Dashboard loads.
-2. Demo incidents display.
-3. User can add an incident.
-4. Local rule-based classification works.
-5. Risk score is calculated out of 100.
-6. SLA status is generated.
-7. Stakeholder summary is generated.
-8. Incident appears in tracker.
-9. User can update incident status.
-10. Dashboard metrics update after changes.
-11. Reports page reflects current incident data.
-12. No button fails silently.
-13. No console errors during core flow.
-
-## Core Flow Tests
-
-### 1. Dashboard Load
+### Dashboard Loads
 
 Steps:
 - Start the app.
 - Open the local Vite URL.
-- Confirm the Dashboard screen is visible.
 
 Expected:
+- Dashboard is the first screen.
 - Header and navigation render.
-- Dashboard metric cards render.
-- Latest incident movement and SLA watchlist show demo incidents.
-- No console errors appear.
+- Metric cards display active incidents, critical risk, SLA pressure, and resolved/closed totals.
+- Latest incident movement displays demo incidents.
+- SLA watchlist displays incidents that are not `On Track`.
 
-### 2. Add Incident Validation
+### Dashboard Navigation
 
 Steps:
 - Click `+ Log incident`.
-- Leave required text fields empty.
+- Click `View tracker`.
+- Click `Open reports`.
+
+Expected:
+- Each button navigates to the correct screen.
+- No button fails silently.
+- Navigation does not create console errors.
+
+## Add Incident Tests
+
+### Required Field Validation
+
+Steps:
+- Open Add Incident.
+- Leave title, description, reported by, or affected service blank.
 
 Expected:
 - `Classify incident` remains disabled.
-- A visible reason explains that required incident details are needed.
-- No silent failure occurs.
+- A visible disabled reason explains what is required.
 
-### 3. Incident Classification
+### Successful Incident Intake
 
 Steps:
-- Complete incident title, description, reported by, and affected service.
-- Keep or adjust impact dropdowns.
+- Enter a valid incident.
+- Select impact values.
 - Click `Classify incident`.
 
 Expected:
-- Classification Result screen opens.
-- Category is generated from local keyword rules.
-- Risk score displays as `/100`.
-- Severity, SLA status, workflow status, and stakeholder summary display.
+- Form submits successfully.
+- New incident is created.
+- User is taken to Classification Result.
 
-### 4. Tracker Appearance
+## Classification Result Tests
+
+### Classification Output
+
+Steps:
+- Submit an incident such as `Customer charged but order not confirmed`.
+
+Expected:
+- Category is generated from local rules.
+- Severity is displayed.
+- Risk score appears out of 100.
+- SLA status is displayed.
+- Workflow status starts as `Open`.
+- Stakeholder summary is generated.
+
+### Result Actions
 
 Steps:
 - Click `Open in tracker`.
+- Click `Add another incident`.
+- Click `Return to dashboard`.
 
 Expected:
-- New incident appears at the top of the tracker.
-- Details panel shows the selected incident.
-- Status dropdown is visible.
+- Each action navigates correctly.
+- No action fails silently.
 
-### 5. Status Update
+## Tracker Tests
+
+### Incident List
 
 Steps:
-- Change status from `Open` to another value.
+- Open Incident Tracker.
 
 Expected:
-- A visible success message appears.
-- The selected incident status updates in the tracker.
-- Returning to Dashboard shows updated active/resolved metrics where applicable.
-- Reports status distribution reflects the same data.
+- Demo incidents display in the table.
+- New incidents appear after classification.
+- Selecting a row updates the detail panel.
 
-### 6. Reports Summary
+### Keyboard Selection
+
+Steps:
+- Focus a tracker row.
+- Press Enter.
+- Press Space.
+
+Expected:
+- Row selection works with keyboard input.
+- Page does not unexpectedly scroll on Space selection.
+
+### Empty State
+
+Expected if no incidents are available:
+- Tracker shows a clear empty-state message.
+- Details panel explains that an incident is needed before status updates.
+
+## Status Update Tests
+
+### Status Change
+
+Steps:
+- Select an incident.
+- Change status from `Open` to `Investigating`, `Resolved`, or another status.
+
+Expected:
+- Status changes visibly.
+- Success message appears.
+- Dashboard metrics update where applicable.
+- Reports status distribution updates.
+
+### Same Status Selection
+
+Steps:
+- Select the current status again.
+
+Expected:
+- User receives visible feedback that the incident is already marked with that status.
+- No silent no-op occurs.
+
+## Reports Tests
+
+### Summary Metrics
 
 Steps:
 - Open Reports.
@@ -96,44 +151,65 @@ Expected:
 - Average risk score is calculated from current incidents.
 - Escalation required count matches incidents with SLA status `Escalation Required`.
 - Closed/resolved count matches incidents with status `Closed` or `Resolved`.
-- Status distribution and category mix reflect current data.
 
-### 7. Refresh Persistence
+### Distribution Views
+
+Expected:
+- Status distribution reflects current statuses.
+- Category mix reflects current incident categories.
+- Highest-risk incident displays the incident with the largest risk score.
+- Empty report sections show clear fallback copy if no data exists.
+
+## localStorage / Persistence Tests
+
+### Refresh Persistence
 
 Steps:
 - Add an incident.
 - Update its status.
-- Refresh the browser.
+- Refresh the page.
 
 Expected:
 - App reloads without breaking.
-- Saved incidents are restored from `localStorage`.
-- If stored data is invalid, the app falls back to demo incidents.
+- Saved incidents restore from `localStorage`.
+- Updated status remains visible.
 
-### 8. Silent Failure Sweep
+### Invalid Storage Fallback
 
 Steps:
-- Click each navigation and action button.
-- Use tracker row keyboard selection with Enter and Space.
-- Try selecting the same status again.
+- Set malformed data in `localStorage`.
+- Refresh the app.
 
 Expected:
-- Every action either completes visibly, shows feedback, or is disabled with a reason.
+- App does not crash.
+- Demo incidents load as fallback.
+- No console errors appear.
+
+## Silent Failure Checks
+
+Every user action must meet one of these outcomes:
+
+- Complete successfully with visible UI change or feedback.
+- Show a clear error or warning message.
+- Be disabled with a visible reason.
+
+Check:
+- Navigation buttons
+- Dashboard action buttons
+- Add Incident form submission
+- Classification Result actions
+- Tracker row selection
+- Tracker status dropdown
+- Reports navigation
+
+Expected:
 - No clickable button does nothing silently.
+- No action causes a blank screen.
+- No action creates an uncaught console error.
 
-## Console Check
+## Build And Console Checks
 
-Steps:
-- Open browser DevTools.
-- Run the core flow from Dashboard through Reports.
-
-Expected:
-- No uncaught runtime errors.
-- No Vite overlay.
-
-## Build Check
-
-Command:
+Run:
 
 ```powershell
 pnpm run build
@@ -142,10 +218,4 @@ pnpm run build
 Expected:
 - TypeScript build succeeds.
 - Vite production build succeeds.
-
-## Known Limits
-
-- Data is local to the browser.
-- Clearing browser storage resets the app to demo incidents.
-- No server-side persistence exists in this MVP.
-- No automated test suite is currently included.
+- Core browser flow runs without console errors.

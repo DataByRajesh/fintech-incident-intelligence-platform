@@ -1,60 +1,126 @@
 # FinTech Operational Resilience & Incident Intelligence Platform
 
-A polished recruiter/interview MVP for FinTech application support and business systems roles. The platform helps operational teams log incidents, classify them with local rules, calculate risk, monitor SLA pressure, and generate stakeholder-ready summaries.
+A recruiter-ready Vite + React + TypeScript MVP for FinTech incident triage, SLA/risk analysis, business impact assessment, and stakeholder communication.
+
+## Why This Project Matters
+
+Operational resilience is a core FinTech concern. Support and business systems teams need to understand what happened, who is affected, how severe the risk is, whether SLA pressure exists, and how to communicate clearly with stakeholders.
+
+This project turns that workflow into a focused MVP: log an incident, classify it with local rules, calculate risk, generate an SLA status, track workflow status, and summarize the impact in business-friendly language.
 
 ## Target Roles
 
-- FinTech Application Analyst
+- Application Analyst
 - Technical Business Analyst
 - Business Systems Analyst
 - FinTech Systems Analyst
 - Production Support Analyst
 - Technical Solutions Consultant
 
-## Demo Flow
-
-1. Open the dashboard.
-2. Log a new operational incident.
-3. Review the rule-based classification result.
-4. Inspect the risk score, SLA status, severity, and stakeholder summary.
-5. Open the incident in the tracker.
-6. Update the incident status.
-7. Confirm dashboard and reports update from the same local incident state.
-
-## Project Docs
-
-- [MVP test plan](docs/MVP-Test-Plan.md)
-- [Demo script](docs/Demo-Script.md)
-- [Project positioning](docs/Project-Positioning.md)
-
-## MVP Features
+## Core Features
 
 - Dashboard with active incident, risk, SLA, and resolution metrics
-- Add Incident form with visible validation feedback
+- Add Incident form with required-field validation
 - Local rule-based incident classification
 - Weighted risk scoring out of 100
 - SLA status generation
-- Stakeholder summary generation
-- Incident tracker with details panel
-- Status updates across the app
-- Reports view for risk, SLA, status, and category distribution
-- Seeded demo incidents for interview walkthroughs
-- Defensive localStorage validation with fallback to demo data
-- Visible feedback for validation, status updates, and persistence warnings
+- Severity and risk labels
+- Stakeholder-ready summary generation
+- Incident tracker with selected incident details
+- Status updates with visible feedback
+- Reports page for incident totals, status distribution, category mix, and highest-risk incident
+- Demo incident data for interview walkthroughs
+- Browser `localStorage` persistence with defensive fallback to demo data
+
+## MVP Flow
+
+1. Open the Dashboard.
+2. Review demo incidents and current operational metrics.
+3. Click `+ Log incident`.
+4. Enter an incident and impact details.
+5. Submit for local classification.
+6. Review category, severity, risk score, SLA status, and stakeholder summary.
+7. Open the incident in the tracker.
+8. Update workflow status.
+9. Confirm Dashboard and Reports reflect the latest incident data.
 
 ## Tech Stack
 
 - Vite
 - React
 - TypeScript
-- Custom CSS
-- Browser localStorage
+- CSS
+- Local rule-based classification
+- Demo incident data
+- Browser `localStorage`
 
-No AI, authentication, database, API backend, Jira/ServiceNow integration, or payment processing is included.
+No AI, authentication, database, backend API, Jira integration, ServiceNow integration, or payment processing is included in V1.
+
+## Project Docs
+
+- [MVP Test Plan](docs/MVP-Test-Plan.md)
+- [Demo Script](docs/Demo-Script.md)
+- [Project Positioning](docs/Project-Positioning.md)
+- [Technical Architecture](docs/Technical-Architecture.md)
+
+## How To Run Locally
+
+Install dependencies:
+
+```powershell
+pnpm install
+```
+
+Start the dev server:
+
+```powershell
+pnpm run dev
+```
+
+Run a production build check:
+
+```powershell
+pnpm run build
+```
+
+## Demo Scenarios
+
+### Scenario 1: Customer Charged But Order Not Confirmed
+
+Use this to show payment operations thinking:
+
+- Title: `Customer charged but order not confirmed`
+- Reported by: `Customer Operations`
+- Affected service: `Checkout payments`
+- Description: `A checkout payment completed but the order confirmation was not created for the customer.`
+
+Explain how the app classifies the incident, calculates risk, assigns SLA pressure, and produces a stakeholder summary.
+
+### Scenario 2: Provider API Timeout
+
+Use this to show production support triage:
+
+- Title: `Payment provider API timeout`
+- Reported by: `Production Support`
+- Affected service: `Payment gateway`
+- Description: `Provider API timeout is causing intermittent payment authorisation failures.`
+
+Explain service impact, customer disruption, financial exposure, and escalation handling.
+
+### Scenario 3: Reconciliation Mismatch
+
+Use this to show business systems analysis:
+
+- Title: `Reconciliation mismatch between ledger and provider`
+- Reported by: `Finance Operations`
+- Affected service: `Reconciliation`
+- Description: `Daily reconciliation found a mismatch between internal ledger and payment provider settlement totals.`
+
+Explain financial impact, operational controls, and stakeholder communication.
 
 ## Risk Scoring Model
 
-Risk score is calculated out of 100 using:
+Risk is calculated out of 100 using weighted inputs:
 
 - Customer impact: 20%
 - Financial impact: 20%
@@ -70,25 +136,28 @@ Risk labels:
 - 61-80: High
 - 81-100: Critical
 
-## Local Setup
+## Limitations Of V1
 
-```powershell
-pnpm install
-pnpm run dev
-```
+- Data is stored locally in the browser.
+- There is no backend database.
+- There is no multi-user workflow.
+- SLA status is rule-based, not timer-based.
+- Classification is keyword-based and intentionally explainable.
+- There is no audit history.
+- There is no ticketing platform integration.
+- There is no automated test suite yet.
 
-Production build check:
+## Future Improvements
 
-```powershell
-pnpm run build
-```
+- Backend persistence
+- Audit trail for status changes
+- Time-based SLA timers
+- Exportable stakeholder reports
+- Role-based access
+- Jira or ServiceNow integration
+- Automated test coverage
+- Optional AI-assisted classification as a future extension
 
-## MVP Acceptance Checks
+## Interview Explanation
 
-- Dashboard loads with demo incidents.
-- A user can add an incident and receive a local classification result.
-- Risk score, SLA status, severity, and stakeholder summary are generated.
-- The incident appears in the tracker.
-- Status updates show visible feedback and refresh dashboard/report metrics.
-- Refresh does not break the app; saved local data is validated before use.
-- Core flow runs without browser console errors.
+"I built this as a FinTech operational resilience MVP. It demonstrates how an analyst or support team can turn an incident report into structured triage: classification, risk scoring, SLA status, workflow tracking, and stakeholder communication. It is intentionally scoped as a front-end MVP with local rules and demo data, so the business logic is transparent and easy to explain in an interview."
