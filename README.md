@@ -21,6 +21,12 @@ A polished recruiter/interview MVP for FinTech application support and business 
 6. Update the incident status.
 7. Confirm dashboard and reports update from the same local incident state.
 
+## Project Docs
+
+- [MVP test plan](docs/MVP-Test-Plan.md)
+- [Demo script](docs/Demo-Script.md)
+- [Project positioning](docs/Project-Positioning.md)
+
 ## MVP Features
 
 - Dashboard with active incident, risk, SLA, and resolution metrics
@@ -33,6 +39,8 @@ A polished recruiter/interview MVP for FinTech application support and business 
 - Status updates across the app
 - Reports view for risk, SLA, status, and category distribution
 - Seeded demo incidents for interview walkthroughs
+- Defensive localStorage validation with fallback to demo data
+- Visible feedback for validation, status updates, and persistence warnings
 
 ## Tech Stack
 
@@ -74,3 +82,13 @@ Production build check:
 ```powershell
 pnpm run build
 ```
+
+## MVP Acceptance Checks
+
+- Dashboard loads with demo incidents.
+- A user can add an incident and receive a local classification result.
+- Risk score, SLA status, severity, and stakeholder summary are generated.
+- The incident appears in the tracker.
+- Status updates show visible feedback and refresh dashboard/report metrics.
+- Refresh does not break the app; saved local data is validated before use.
+- Core flow runs without browser console errors.
