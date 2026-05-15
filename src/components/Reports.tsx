@@ -68,16 +68,20 @@ export function Reports({ incidents }: ReportsProps) {
           <h3>Status distribution</h3>
           <div className="status-distribution">
             <div className="status-meter" aria-label="Incident status distribution">
-              {statusCounts
-                .filter((item) => item.count > 0)
-                .map((item) => (
-                  <span
-                    className={`status-segment ${statusClassName(item.status)}`}
-                    key={item.status}
-                    style={{ flexGrow: item.count }}
-                    title={`${item.status}: ${item.count}`}
-                  />
-                ))}
+              {incidents.length > 0 ? (
+                statusCounts
+                  .filter((item) => item.count > 0)
+                  .map((item) => (
+                    <span
+                      className={`status-segment ${statusClassName(item.status)}`}
+                      key={item.status}
+                      style={{ flexGrow: item.count }}
+                      title={`${item.status}: ${item.count}`}
+                    />
+                  ))
+              ) : (
+                <span className="status-segment status-empty" />
+              )}
             </div>
             {statusCounts.map((item) => (
               <ReportBar key={item.status} label={item.status} count={item.count} total={incidents.length} />
@@ -87,14 +91,18 @@ export function Reports({ incidents }: ReportsProps) {
 
         <article className="panel span-panel">
           <h3>Category mix</h3>
-          <div className="category-grid">
-            {categoryCounts.map((item) => (
-              <div className="category-pill" key={item.category}>
-                <span>{item.category}</span>
-                <strong>{item.count}</strong>
-              </div>
-            ))}
-          </div>
+          {categoryCounts.length > 0 ? (
+            <div className="category-grid">
+              {categoryCounts.map((item) => (
+                <div className="category-pill" key={item.category}>
+                  <span>{item.category}</span>
+                  <strong>{item.count}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted-copy">No incident categories to summarize yet.</p>
+          )}
         </article>
       </div>
     </section>

@@ -6,18 +6,71 @@ import { IncidentTracker } from "./components/IncidentTracker";
 import { Reports } from "./components/Reports";
 import { createIncident } from "./logic/incidentRules";
 import { demoIncidents } from "./data/demoIncidents";
-import type { Incident, IncidentDraft, IncidentStatus } from "./types/incident";
+import {
+  INCIDENT_CATEGORIES,
+  INCIDENT_STATUSES,
+  RISK_LABELS,
+  SEVERITIES,
+  SLA_STATUSES,
+  type ImpactLevel,
+  type Incident,
+  type IncidentDraft,
+  type IncidentStatus,
+  type WorkaroundAvailability,
+} from "./types/incident";
 
 type Screen = "dashboard" | "add" | "result" | "tracker" | "reports";
 
 const storageKey = "fintech-incident-intelligence-incidents";
+const impactLevels: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
+const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
+
+function isOneOf<T extends string>(value: unknown, options: readonly T[]): value is T {
+  return typeof value === "string" && options.includes(value as T);
+}
+
+function isValidIncident(value: unknown): value is Incident {
+  if (!value || typeof value !== "object") return false;
+
+  const incident = value as Partial<Incident>;
+  const requiredText = [
+    incident.id,
+    incident.reference,
+    incident.title,
+    incident.description,
+    incident.reportedBy,
+    incident.affectedService,
+    incident.stakeholderSummary,
+    incident.createdAt,
+    incident.updatedAt,
+  ];
+
+  return (
+    requiredText.every((field) => typeof field === "string" && field.trim().length > 0) &&
+    typeof incident.riskScore === "number" &&
+    Number.isFinite(incident.riskScore) &&
+    incident.riskScore >= 0 &&
+    incident.riskScore <= 100 &&
+    isOneOf(incident.customerImpact, impactLevels) &&
+    isOneOf(incident.financialImpact, impactLevels) &&
+    isOneOf(incident.slaUrgency, impactLevels) &&
+    isOneOf(incident.systemImpact, impactLevels) &&
+    isOneOf(incident.complianceSensitivity, impactLevels) &&
+    isOneOf(incident.workaroundAvailability, workaroundOptions) &&
+    isOneOf(incident.category, INCIDENT_CATEGORIES) &&
+    isOneOf(incident.severity, SEVERITIES) &&
+    isOneOf(incident.riskLabel, RISK_LABELS) &&
+    isOneOf(incident.slaStatus, SLA_STATUSES) &&
+    isOneOf(incident.status, INCIDENT_STATUSES)
+  );
+}
 
 function loadIncidents(): Incident[] {
   try {
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) return demoIncidents;
-    const parsed = JSON.parse(stored) as Incident[];
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : demoIncidents;
+    const parsed = JSON.parse(stored) as unknown;
+    return Array.isArray(parsed) && parsed.length > 0 && parsed.every(isValidIncident) ? parsed : demoIncidents;
   } catch {
     return demoIncidents;
   }
@@ -29,9 +82,15 @@ export default function App() {
   const [latestIncidentId, setLatestIncidentId] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [persistenceWarning, setPersistenceWarning] = useState("");
 
   useEffect(() => {
-    window.localStorage.setItem(storageKey, JSON.stringify(incidents));
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(incidents));
+      setPersistenceWarning("");
+    } catch {
+      setPersistenceWarning("Incident changes are visible now, but could not be saved for refresh.");
+    }
   }, [incidents]);
 
   const latestIncident = useMemo(
@@ -89,6 +148,7 @@ export default function App() {
       </header>
 
       <main>
+        {persistenceWarning ? <div className="error-message app-message">{persistenceWarning}</div> : null}
         {screen === "dashboard" ? (
           <Dashboard incidents={incidents} onNavigate={navigate} notice={notice} />
         ) : null}

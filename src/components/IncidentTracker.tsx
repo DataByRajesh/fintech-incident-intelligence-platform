@@ -19,7 +19,16 @@ export function IncidentTracker({
   const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0] ?? null;
 
   function handleStatusChange(status: IncidentStatus) {
-    if (!selectedIncident) return;
+    if (!selectedIncident) {
+      setNotice("Select an incident before updating status.");
+      return;
+    }
+
+    if (selectedIncident.status === status) {
+      setNotice(`${selectedIncident.reference} is already marked ${status}.`);
+      return;
+    }
+
     onUpdateStatus(selectedIncident.id, status);
     setNotice(`${selectedIncident.reference} status updated to ${status}. Dashboard metrics have refreshed.`);
   }
@@ -48,33 +57,45 @@ export function IncidentTracker({
               </tr>
             </thead>
             <tbody>
-              {incidents.map((incident) => (
-                <tr
-                  className={selectedIncident?.id === incident.id ? "selected-row" : ""}
-                  key={incident.id}
-                  onClick={() => onSelectIncident(incident.id)}
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") onSelectIncident(incident.id);
-                  }}
-                >
-                  <td>{incident.reference}</td>
-                  <td>
-                    <strong>{incident.title}</strong>
-                    <span>{incident.affectedService}</span>
-                  </td>
-                  <td>{incident.category}</td>
-                  <td>
-                    <RiskBadge label={incident.riskLabel} />
-                  </td>
-                  <td>
-                    <SlaBadge label={incident.slaStatus} />
-                  </td>
-                  <td>
-                    <StatusBadge label={incident.status} />
+              {incidents.length > 0 ? (
+                incidents.map((incident) => (
+                  <tr
+                    className={selectedIncident?.id === incident.id ? "selected-row" : ""}
+                    key={incident.id}
+                    onClick={() => onSelectIncident(incident.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onSelectIncident(incident.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <td>{incident.reference}</td>
+                    <td>
+                      <strong>{incident.title}</strong>
+                      <span>{incident.affectedService}</span>
+                    </td>
+                    <td>{incident.category}</td>
+                    <td>
+                      <RiskBadge label={incident.riskLabel} />
+                    </td>
+                    <td>
+                      <SlaBadge label={incident.slaStatus} />
+                    </td>
+                    <td>
+                      <StatusBadge label={incident.status} />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6}>
+                    <p className="muted-copy table-empty">No incidents are available in the tracker.</p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </article>
@@ -135,7 +156,11 @@ function IncidentDetails({
 
       <label className="status-control">
         Update status
-        <select value={incident.status} onChange={(event) => onUpdateStatus(event.target.value as IncidentStatus)}>
+        <select
+          aria-label={`Update status for ${incident.reference}`}
+          value={incident.status}
+          onChange={(event) => onUpdateStatus(event.target.value as IncidentStatus)}
+        >
           {INCIDENT_STATUSES.map((status) => (
             <option key={status} value={status}>
               {status}

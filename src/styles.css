@@ -114,6 +114,11 @@ main {
   margin: 0 auto;
 }
 
+.app-message {
+  max-width: 1240px;
+  margin: 0 auto 18px;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-start;
@@ -478,6 +483,16 @@ dd {
   color: #5c6d80;
 }
 
+.muted-copy {
+  color: #5c6d80;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.table-empty {
+  padding: 6px 0;
+}
+
 .bar-list,
 .status-distribution {
   display: grid;
@@ -583,6 +598,11 @@ dd {
 
 .status-closed {
   background: #42526a;
+}
+
+.status-empty {
+  background: #c7d1dc;
+  flex-grow: 1;
 }
 
 .span-panel {

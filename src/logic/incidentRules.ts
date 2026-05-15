@@ -113,6 +113,12 @@ export function generateStakeholderSummary(input: IncidentDraft, incident: Pick<
   return `${incident.severity} ${incident.category.toLowerCase()} incident affecting ${input.affectedService}. Risk is ${incident.riskLabel.toLowerCase()} at ${incident.riskScore}/100 with SLA status "${incident.slaStatus}". Current user impact: ${input.customerImpact.toLowerCase()}; financial impact: ${input.financialImpact.toLowerCase()}; workaround: ${input.workaroundAvailability.toLowerCase()}. Recommended action: triage with product/support owners, confirm customer and financial exposure, and provide stakeholder updates until service risk is reduced.`;
 }
 
+function createIncidentId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `incident-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function createIncident(draft: IncidentDraft, existingCount: number): Incident {
   const now = new Date().toISOString();
   const riskScore = calculateRiskScore(draft);
@@ -124,7 +130,7 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
 
   return {
     ...draft,
-    id: crypto.randomUUID(),
+    id: createIncidentId(),
     reference: `FIN-${String(existingCount + 1).padStart(4, "0")}`,
     category,
     severity,

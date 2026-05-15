@@ -26,7 +26,7 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
           <p className="eyebrow">Operational command view</p>
           <h2>Dashboard</h2>
         </div>
-        <button className="primary-action" onClick={() => onNavigate("add")}>
+        <button className="primary-action" onClick={() => onNavigate("add")} type="button">
           + Log incident
         </button>
       </div>
@@ -54,38 +54,43 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
         <article className="panel">
           <div className="panel-heading">
             <h3>Latest incident movement</h3>
-            <button className="text-action" onClick={() => onNavigate("tracker")}>
+            <button className="text-action" onClick={() => onNavigate("tracker")} type="button">
               View tracker
             </button>
           </div>
           <div className="incident-list">
-            {latest.map((incident) => (
-              <div className="incident-row" key={incident.id}>
-                <div>
-                  <strong>{incident.reference}</strong>
-                  <span>{incident.title}</span>
+            {latest.length > 0 ? (
+              latest.map((incident) => (
+                <div className="incident-row" key={incident.id}>
+                  <div>
+                    <strong>{incident.reference}</strong>
+                    <span>{incident.title}</span>
+                  </div>
+                  <div className="row-badges">
+                    <RiskBadge label={incident.riskLabel} />
+                    <StatusBadge label={incident.status} />
+                  </div>
                 </div>
-                <div className="row-badges">
-                  <RiskBadge label={incident.riskLabel} />
-                  <StatusBadge label={incident.status} />
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="muted-copy">No incident movement yet.</p>
+            )}
           </div>
         </article>
 
         <article className="panel">
           <div className="panel-heading">
             <h3>SLA watchlist</h3>
-            <button className="text-action" onClick={() => onNavigate("reports")}>
+            <button className="text-action" onClick={() => onNavigate("reports")} type="button">
               Open reports
             </button>
           </div>
           <div className="incident-list">
-            {incidents
-              .filter((incident) => incident.slaStatus !== "On Track")
-              .slice(0, 4)
-              .map((incident) => (
+            {incidents.filter((incident) => incident.slaStatus !== "On Track").length > 0 ? (
+              incidents
+                .filter((incident) => incident.slaStatus !== "On Track")
+                .slice(0, 4)
+                .map((incident) => (
                 <div className="incident-row" key={incident.id}>
                   <div>
                     <strong>{incident.category}</strong>
@@ -93,7 +98,10 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
                   </div>
                   <SlaBadge label={incident.slaStatus} />
                 </div>
-              ))}
+                ))
+            ) : (
+              <p className="muted-copy">No incidents currently need SLA attention.</p>
+            )}
           </div>
         </article>
       </div>

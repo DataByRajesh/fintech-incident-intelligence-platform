@@ -13,7 +13,7 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
         <div className="empty-state">
           <h2>Classification Result</h2>
           <p>No incident has been classified in this session yet.</p>
-          <button className="primary-action" onClick={() => onNavigate("add")}>
+          <button className="primary-action" onClick={() => onNavigate("add")} type="button">
             Log incident
           </button>
         </div>
@@ -28,7 +28,7 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
           <p className="eyebrow">Classification complete</p>
           <h2>{incident.reference}: {incident.title}</h2>
         </div>
-        <button className="secondary-action" onClick={() => onNavigate("tracker")}>
+        <button className="secondary-action" onClick={() => onNavigate("tracker")} type="button">
           Open in tracker
         </button>
       </div>
@@ -63,10 +63,10 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
       </article>
 
       <div className="action-row">
-        <button className="secondary-action" onClick={() => onNavigate("add")}>
+        <button className="secondary-action" onClick={() => onNavigate("add")} type="button">
           Add another incident
         </button>
-        <button className="primary-action" onClick={() => onNavigate("dashboard")}>
+        <button className="primary-action" onClick={() => onNavigate("dashboard")} type="button">
           Return to dashboard
         </button>
       </div>
