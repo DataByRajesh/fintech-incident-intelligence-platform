@@ -1,5 +1,5 @@
 import { RiskBadge, SlaBadge } from "./Badges";
-import { INCIDENT_CATEGORIES, INCIDENT_STATUSES, type Incident } from "../types/incident";
+import { INCIDENT_CATEGORIES, INCIDENT_STATUSES, type Incident, type IncidentStatus } from "../types/incident";
 
 interface ReportsProps {
   incidents: Incident[];
@@ -66,7 +66,19 @@ export function Reports({ incidents }: ReportsProps) {
 
         <article className="panel">
           <h3>Status distribution</h3>
-          <div className="bar-list">
+          <div className="status-distribution">
+            <div className="status-meter" aria-label="Incident status distribution">
+              {statusCounts
+                .filter((item) => item.count > 0)
+                .map((item) => (
+                  <span
+                    className={`status-segment ${statusClassName(item.status)}`}
+                    key={item.status}
+                    style={{ flexGrow: item.count }}
+                    title={`${item.status}: ${item.count}`}
+                  />
+                ))}
+            </div>
             {statusCounts.map((item) => (
               <ReportBar key={item.status} label={item.status} count={item.count} total={incidents.length} />
             ))}
@@ -89,17 +101,37 @@ export function Reports({ incidents }: ReportsProps) {
   );
 }
 
-function ReportBar({ label, count, total }: { label: string; count: number; total: number }) {
-  const width = total > 0 ? Math.max(6, Math.round((count / total) * 100)) : 0;
+const statusToneClass: Record<IncidentStatus, string> = {
+  Open: "status-open",
+  Investigating: "status-investigating",
+  Escalated: "status-escalated",
+  Monitoring: "status-monitoring",
+  Resolved: "status-resolved",
+  Closed: "status-closed",
+};
+
+function statusClassName(status: IncidentStatus) {
+  return statusToneClass[status];
+}
+
+function ReportBar({ label, count, total }: { label: IncidentStatus; count: number; total: number }) {
+  const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+  const width = count > 0 ? Math.max(8, percentage) : 0;
 
   return (
     <div className="report-bar">
-      <div>
-        <span>{label}</span>
-        <strong>{count}</strong>
+      <div className="report-bar-meta">
+        <span>
+          <i className={`status-dot ${statusClassName(label)}`} aria-hidden="true" />
+          {label}
+        </span>
+        <strong>
+          {count}
+          <small>{percentage}%</small>
+        </strong>
       </div>
       <span className="bar-track">
-        <span className="bar-fill" style={{ width: `${width}%` }} />
+        <span className={`bar-fill ${statusClassName(label)}`} style={{ width: `${width}%` }} />
       </span>
     </div>
   );

@@ -478,32 +478,111 @@ dd {
   color: #5c6d80;
 }
 
-.bar-list {
+.bar-list,
+.status-distribution {
   display: grid;
   gap: 14px;
 }
 
-.report-bar {
-  display: grid;
-  gap: 7px;
+.status-distribution {
+  gap: 16px;
 }
 
-.report-bar div {
+.status-meter {
+  background: #eef3f7;
+  border: 1px solid #dbe4ed;
+  border-radius: 8px;
+  display: flex;
+  gap: 3px;
+  height: 18px;
+  overflow: hidden;
+  padding: 3px;
+}
+
+.status-segment {
+  border-radius: 5px;
+  min-width: 10px;
+}
+
+.report-bar {
+  display: grid;
+  gap: 8px;
+}
+
+.report-bar-meta {
+  align-items: center;
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.report-bar-meta span,
+.report-bar-meta strong {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.report-bar-meta span {
+  color: #314155;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.report-bar-meta strong {
+  color: #162033;
+  font-size: 0.95rem;
+}
+
+.report-bar-meta small {
+  color: #718195;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .bar-track {
-  background: #e9eef4;
+  background: #edf2f6;
   border-radius: 999px;
-  height: 10px;
+  height: 7px;
   overflow: hidden;
 }
 
 .bar-fill {
-  background: #0b6b5c;
+  border-radius: inherit;
   display: block;
   height: 100%;
+  transition: width 180ms ease;
+}
+
+.status-dot {
+  border-radius: 999px;
+  display: inline-block;
+  height: 9px;
+  width: 9px;
+}
+
+.status-open {
+  background: #768598;
+}
+
+.status-investigating {
+  background: #5663c1;
+}
+
+.status-escalated {
+  background: #d26a18;
+}
+
+.status-monitoring {
+  background: #0b8a76;
+}
+
+.status-resolved {
+  background: #20864b;
+}
+
+.status-closed {
+  background: #42526a;
 }
 
 .span-panel {
