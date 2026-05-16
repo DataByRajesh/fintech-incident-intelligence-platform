@@ -173,6 +173,34 @@ function IncidentDetails({
         <h4>Stakeholder summary</h4>
         <p>{incident.stakeholderSummary}</p>
       </article>
+
+      <article className="summary-panel compact">
+        <h4>Business impact reasoning</h4>
+        <p>{incident.businessImpactReasoning}</p>
+      </article>
+
+      <article className="summary-panel compact">
+        <h4>Investigation playbook</h4>
+        <ul className="insight-list compact-list">
+          {incident.investigationPlaybook.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+      </article>
+
+      <article className="summary-panel compact">
+        <h4>Possible causes to investigate</h4>
+        <ul className="insight-list compact-list">
+          {incident.rcaHypotheses.map((hypothesis) => (
+            <li key={hypothesis}>{hypothesis}</li>
+          ))}
+        </ul>
+      </article>
+
+      <article className="summary-panel compact">
+        <h4>Stakeholder update draft</h4>
+        <p>{incident.stakeholderUpdateDraft}</p>
+      </article>
     </aside>
   );
 }

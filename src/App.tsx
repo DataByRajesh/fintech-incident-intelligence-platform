@@ -4,7 +4,12 @@ import { ClassificationResult } from "./components/ClassificationResult";
 import { Dashboard } from "./components/Dashboard";
 import { IncidentTracker } from "./components/IncidentTracker";
 import { Reports } from "./components/Reports";
-import { createIncident } from "./logic/incidentRules";
+import {
+  createIncident,
+  generateBusinessImpactReasoning,
+  generateStakeholderUpdateDraft,
+  getInvestigationPlaybook,
+} from "./logic/incidentRules";
 import { demoIncidents } from "./data/demoIncidents";
 import {
   INCIDENT_CATEGORIES,
@@ -29,7 +34,7 @@ function isOneOf<T extends string>(value: unknown, options: readonly T[]): value
   return typeof value === "string" && options.includes(value as T);
 }
 
-function isValidIncident(value: unknown): value is Incident {
+function isBaseIncident(value: unknown): value is Incident {
   if (!value || typeof value !== "object") return false;
 
   const incident = value as Partial<Incident>;
@@ -65,12 +70,45 @@ function isValidIncident(value: unknown): value is Incident {
   );
 }
 
+function normalizeIncident(incident: Incident): Incident {
+  const intelligenceContext = {
+    category: incident.category,
+    riskLabel: incident.riskLabel,
+    riskScore: incident.riskScore,
+    slaStatus: incident.slaStatus,
+    severity: incident.severity,
+  };
+  const playbook = getInvestigationPlaybook(incident.category);
+
+  return {
+    ...incident,
+    businessImpactReasoning:
+      typeof incident.businessImpactReasoning === "string" && incident.businessImpactReasoning.trim()
+        ? incident.businessImpactReasoning
+        : generateBusinessImpactReasoning(incident, intelligenceContext),
+    investigationPlaybook:
+      Array.isArray(incident.investigationPlaybook) && incident.investigationPlaybook.length > 0
+        ? incident.investigationPlaybook
+        : playbook.steps,
+    rcaHypotheses:
+      Array.isArray(incident.rcaHypotheses) && incident.rcaHypotheses.length > 0
+        ? incident.rcaHypotheses
+        : playbook.rcaHypotheses,
+    stakeholderUpdateDraft:
+      typeof incident.stakeholderUpdateDraft === "string" && incident.stakeholderUpdateDraft.trim()
+        ? incident.stakeholderUpdateDraft
+        : generateStakeholderUpdateDraft(incident, intelligenceContext),
+  };
+}
+
 function loadIncidents(): Incident[] {
   try {
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) return demoIncidents;
     const parsed = JSON.parse(stored) as unknown;
-    return Array.isArray(parsed) && parsed.length > 0 && parsed.every(isValidIncident) ? parsed : demoIncidents;
+    return Array.isArray(parsed) && parsed.length > 0 && parsed.every(isBaseIncident)
+      ? parsed.map(normalizeIncident)
+      : demoIncidents;
   } catch {
     return demoIncidents;
   }

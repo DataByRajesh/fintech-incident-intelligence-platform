@@ -1,4 +1,5 @@
 import { RiskBadge, SlaBadge, StatusBadge } from "./Badges";
+import { getRepeatedPatternInsights } from "../logic/incidentRules";
 import type { Incident } from "../types/incident";
 
 interface DashboardProps {
@@ -17,6 +18,7 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
   const latest = [...incidents]
     .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
     .slice(0, 4);
+  const repeatedPattern = getRepeatedPatternInsights(incidents)[0];
 
   return (
     <section className="screen">
@@ -51,6 +53,17 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
       </div>
 
       <div className="dashboard-grid">
+        {repeatedPattern ? (
+          <article className="panel span-panel pattern-panel">
+            <p className="eyebrow">Repeated pattern insight</p>
+            <h3>{repeatedPattern.category} pattern detected</h3>
+            <p>
+              {repeatedPattern.count} incidents share this category. {repeatedPattern.opportunity}
+            </p>
+            <p>{repeatedPattern.followUp}</p>
+          </article>
+        ) : null}
+
         <article className="panel">
           <div className="panel-heading">
             <h3>Latest incident movement</h3>

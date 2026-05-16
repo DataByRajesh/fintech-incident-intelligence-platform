@@ -58,6 +58,18 @@ export interface IncidentDraft extends RiskInputs {
   affectedService: string;
 }
 
+export interface InvestigationPlaybook {
+  steps: string[];
+  rcaHypotheses: string[];
+}
+
+export interface RepeatedPatternInsight {
+  category: IncidentCategory;
+  count: number;
+  opportunity: string;
+  followUp: string;
+}
+
 export interface Incident extends IncidentDraft {
   id: string;
   reference: string;
@@ -68,6 +80,10 @@ export interface Incident extends IncidentDraft {
   slaStatus: SlaStatus;
   status: IncidentStatus;
   stakeholderSummary: string;
+  businessImpactReasoning: string;
+  investigationPlaybook: string[];
+  rcaHypotheses: string[];
+  stakeholderUpdateDraft: string;
   createdAt: string;
   updatedAt: string;
 }

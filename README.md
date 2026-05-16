@@ -1,12 +1,12 @@
 # FinTech Operational Resilience & Incident Intelligence Platform
 
-A recruiter-ready Vite + React + TypeScript MVP for FinTech incident triage, SLA/risk analysis, business impact assessment, and stakeholder communication.
+A recruiter-ready Vite + React + TypeScript MVP for FinTech incident triage, business impact reasoning, SLA/risk prioritisation, investigation playbooks, stakeholder communication, and repeated incident pattern analysis.
 
 ## Why This Project Matters
 
 Operational resilience is a core FinTech concern. Support and business systems teams need to understand what happened, who is affected, how severe the risk is, whether SLA pressure exists, and how to communicate clearly with stakeholders.
 
-This project turns that workflow into a focused MVP: log an incident, classify it with local rules, calculate risk, generate an SLA status, track workflow status, and summarize the impact in business-friendly language.
+This project turns that workflow into a focused MVP: log an incident, classify it with local rules, calculate risk, generate an SLA status, explain business impact, suggest investigation steps, draft stakeholder updates, track workflow status, and identify repeated incident patterns.
 
 ## Target Roles
 
@@ -26,9 +26,13 @@ This project turns that workflow into a focused MVP: log an incident, classify i
 - SLA status generation
 - Severity and risk labels
 - Stakeholder-ready summary generation
+- Business impact reasoning for every classified incident
+- Category-specific investigation playbooks
+- Possible root cause hypotheses framed as investigation prompts
+- Plain-English stakeholder update drafts
 - Incident tracker with selected incident details
 - Status updates with visible feedback
-- Reports page for incident totals, status distribution, category mix, and highest-risk incident
+- Reports page for incident totals, status distribution, category mix, highest-risk incident, and repeated category patterns
 - Demo incident data for interview walkthroughs
 - Browser `localStorage` persistence with defensive fallback to demo data
 
@@ -39,10 +43,10 @@ This project turns that workflow into a focused MVP: log an incident, classify i
 3. Click `+ Log incident`.
 4. Enter an incident and impact details.
 5. Submit for local classification.
-6. Review category, severity, risk score, SLA status, and stakeholder summary.
+6. Review category, severity, risk score, SLA status, stakeholder summary, business impact reasoning, playbook, RCA hypotheses, and stakeholder update draft.
 7. Open the incident in the tracker.
 8. Update workflow status.
-9. Confirm Dashboard and Reports reflect the latest incident data.
+9. Confirm Dashboard and Reports reflect the latest incident data and repeated category insights.
 
 ## Tech Stack
 
@@ -95,6 +99,7 @@ Use this to show payment operations thinking:
 - Description: `A checkout payment completed but the order confirmation was not created for the customer.`
 
 Explain how the app classifies the incident, calculates risk, assigns SLA pressure, and produces a stakeholder summary.
+Also show how the business impact reasoning justifies priority and how the investigation playbook guides the next steps.
 
 ### Scenario 2: Provider API Timeout
 
@@ -106,6 +111,7 @@ Use this to show production support triage:
 - Description: `Provider API timeout is causing intermittent payment authorisation failures.`
 
 Explain service impact, customer disruption, financial exposure, and escalation handling.
+Use this scenario to discuss possible causes to investigate, without claiming the app knows the actual root cause.
 
 ### Scenario 3: Reconciliation Mismatch
 
@@ -117,6 +123,7 @@ Use this to show business systems analysis:
 - Description: `Daily reconciliation found a mismatch between internal ledger and payment provider settlement totals.`
 
 Explain financial impact, operational controls, and stakeholder communication.
+Use this scenario to show repeated pattern analysis if multiple reconciliation or transaction incidents exist.
 
 ## Risk Scoring Model
 
@@ -143,6 +150,7 @@ Risk labels:
 - There is no multi-user workflow.
 - SLA status is rule-based, not timer-based.
 - Classification is keyword-based and intentionally explainable.
+- RCA hypotheses are prompts for investigation, not confirmed root causes.
 - There is no audit history.
 - There is no ticketing platform integration.
 - There is no automated test suite yet.
@@ -160,4 +168,4 @@ Risk labels:
 
 ## Interview Explanation
 
-"I built this as a FinTech operational resilience MVP. It demonstrates how an analyst or support team can turn an incident report into structured triage: classification, risk scoring, SLA status, workflow tracking, and stakeholder communication. It is intentionally scoped as a front-end MVP with local rules and demo data, so the business logic is transparent and easy to explain in an interview."
+"I built this as a FinTech operational resilience MVP. It demonstrates how an analyst or support team can turn an incident report into structured triage: classification, business impact reasoning, risk scoring, SLA prioritisation, investigation playbooks, workflow tracking, stakeholder communication, and repeated incident pattern analysis. It is intentionally scoped as a front-end MVP with local rules and demo data, so the business logic is transparent and easy to explain in an interview."

@@ -1,4 +1,5 @@
 import { RiskBadge, SlaBadge } from "./Badges";
+import { getRepeatedPatternInsights } from "../logic/incidentRules";
 import { INCIDENT_CATEGORIES, INCIDENT_STATUSES, type Incident, type IncidentStatus } from "../types/incident";
 
 interface ReportsProps {
@@ -18,6 +19,7 @@ export function Reports({ incidents }: ReportsProps) {
     status,
     count: incidents.filter((incident) => incident.status === status).length,
   }));
+  const repeatedPatterns = getRepeatedPatternInsights(incidents);
 
   return (
     <section className="screen">
@@ -102,6 +104,25 @@ export function Reports({ incidents }: ReportsProps) {
             </div>
           ) : (
             <p className="muted-copy">No incident categories to summarize yet.</p>
+          )}
+        </article>
+
+        <article className="panel span-panel">
+          <h3>Repeated pattern analysis</h3>
+          {repeatedPatterns.length > 0 ? (
+            <div className="pattern-list">
+              {repeatedPatterns.map((pattern) => (
+                <div className="pattern-item" key={pattern.category}>
+                  <strong>{pattern.category}</strong>
+                  <p>
+                    Pattern detected: {pattern.count} incidents. {pattern.opportunity}
+                  </p>
+                  <p>{pattern.followUp}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted-copy">No repeated incident categories detected yet.</p>
           )}
         </article>
       </div>

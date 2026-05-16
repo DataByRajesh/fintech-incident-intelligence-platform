@@ -62,6 +62,36 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
         <p>{incident.stakeholderSummary}</p>
       </article>
 
+      <div className="intelligence-grid">
+        <article className="summary-panel">
+          <h3>Business impact reasoning</h3>
+          <p>{incident.businessImpactReasoning}</p>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Stakeholder update draft</h3>
+          <p>{incident.stakeholderUpdateDraft}</p>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Investigation playbook</h3>
+          <ul className="insight-list">
+            {incident.investigationPlaybook.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Possible causes to investigate</h3>
+          <ul className="insight-list">
+            {incident.rcaHypotheses.map((hypothesis) => (
+              <li key={hypothesis}>{hypothesis}</li>
+            ))}
+          </ul>
+        </article>
+      </div>
+
       <div className="action-row">
         <button className="secondary-action" onClick={() => onNavigate("add")} type="button">
           Add another incident
