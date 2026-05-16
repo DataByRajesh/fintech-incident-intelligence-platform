@@ -1,31 +1,27 @@
-import { RiskBadge, SlaBadge } from "./Badges";
-import { getRepeatedPatternInsights } from "../logic/incidentRules";
-import { INCIDENT_CATEGORIES, INCIDENT_STATUSES, type Incident, type IncidentStatus } from "../types/incident";
+import { RiskBadge, SeverityBadge, SlaBadge } from "./Badges";
+import { getRepeatedPatternInsights, isReconciliationRisk } from "../logic/incidentRules";
+import { SEVERITIES, type Incident, type Severity } from "../types/incident";
 
 interface ReportsProps {
   incidents: Incident[];
 }
 
 export function Reports({ incidents }: ReportsProps) {
-  const averageRisk = incidents.length
-    ? Math.round(incidents.reduce((total, incident) => total + incident.riskScore, 0) / incidents.length)
-    : 0;
-  const highestRisk = [...incidents].sort((a, b) => b.riskScore - a.riskScore)[0];
-  const categoryCounts = INCIDENT_CATEGORIES.map((category) => ({
-    category,
-    count: incidents.filter((incident) => incident.category === category).length,
-  })).filter((item) => item.count > 0);
-  const statusCounts = INCIDENT_STATUSES.map((status) => ({
-    status,
-    count: incidents.filter((incident) => incident.status === status).length,
-  }));
+  const totalExposure = incidents.reduce((total, incident) => total + incident.estimatedFinancialImpact, 0);
+  const affectedCustomers = incidents.reduce((total, incident) => total + incident.affectedCustomers, 0);
+  const reconciliationIncidents = incidents.filter(isReconciliationRisk);
+  const highRiskOpen = incidents.filter(
+    (incident) => !["Resolved", "Closed"].includes(incident.status) && ["Critical", "High"].includes(incident.riskLabel),
+  );
+  const escalationItems = incidents.filter((incident) => incident.slaStatus === "Escalation Required");
   const repeatedPatterns = getRepeatedPatternInsights(incidents);
+  const highestRisk = [...incidents].sort((a, b) => b.riskScore - a.riskScore)[0];
 
   return (
     <section className="screen">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Stakeholder reporting</p>
+          <p className="eyebrow">Structured management reports</p>
           <h2>Reports</h2>
         </div>
       </div>
@@ -36,132 +32,138 @@ export function Reports({ incidents }: ReportsProps) {
           <strong>{incidents.length}</strong>
         </article>
         <article className="metric-card">
-          <span>Average risk score</span>
-          <strong>{averageRisk}/100</strong>
+          <span>Financial exposure</span>
+          <strong>GBP {totalExposure.toLocaleString("en-GB")}</strong>
+        </article>
+        <article className="metric-card">
+          <span>Affected customers</span>
+          <strong>{affectedCustomers.toLocaleString("en-GB")}</strong>
         </article>
         <article className="metric-card">
           <span>Escalation required</span>
-          <strong>{incidents.filter((incident) => incident.slaStatus === "Escalation Required").length}</strong>
-        </article>
-        <article className="metric-card">
-          <span>Closed or resolved</span>
-          <strong>{incidents.filter((incident) => ["Closed", "Resolved"].includes(incident.status)).length}</strong>
+          <strong>{escalationItems.length}</strong>
         </article>
       </div>
 
       <div className="dashboard-grid">
         <article className="panel">
-          <h3>Highest risk incident</h3>
+          <h3>Operational summary</h3>
+          <p className="muted-copy">
+            {incidents.length} demo incidents are under review, with {highRiskOpen.length} open high-risk items and
+            {reconciliationIncidents.length} reconciliation-sensitive cases. The current estimated exposure is GBP{" "}
+            {totalExposure.toLocaleString("en-GB")}.
+          </p>
+        </article>
+
+        <article className="panel">
+          <h3>Severity breakdown</h3>
+          <div className="status-distribution">
+            {SEVERITIES.map((severity) => (
+              <ReportBar
+                count={incidents.filter((incident) => incident.severity === severity).length}
+                key={severity}
+                label={severity}
+                total={incidents.length}
+              />
+            ))}
+          </div>
+        </article>
+
+        <article className="panel span-panel">
+          <h3>Reconciliation summary</h3>
+          {reconciliationIncidents.length > 0 ? (
+            <div className="pattern-list">
+              {reconciliationIncidents.slice(0, 5).map((incident) => (
+                <div className="pattern-item" key={incident.id}>
+                  <strong>{incident.reference}: {incident.category}</strong>
+                  <p>{incident.reportingNote}</p>
+                  <p>{incident.reconciliationPriority}. {incident.recommendedAction}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted-copy">No reconciliation-sensitive incidents are currently present.</p>
+          )}
+        </article>
+
+        <article className="panel">
+          <h3>Customer impact summary</h3>
+          <p className="muted-copy">
+            Total affected customers: {affectedCustomers.toLocaleString("en-GB")}. Highest customer exposure:{" "}
+            {Math.max(0, ...incidents.map((incident) => incident.affectedCustomers)).toLocaleString("en-GB")} customers
+            on a single incident.
+          </p>
+        </article>
+
+        <article className="panel">
+          <h3>Financial exposure</h3>
           {highestRisk ? (
             <div className="report-callout">
               <strong>{highestRisk.reference}: {highestRisk.title}</strong>
-              <p>{highestRisk.stakeholderSummary}</p>
+              <p>{highestRisk.reportingNote}</p>
               <div className="row-badges">
                 <RiskBadge label={highestRisk.riskLabel} />
                 <SlaBadge label={highestRisk.slaStatus} />
               </div>
             </div>
           ) : (
-            <p>No incidents available.</p>
-          )}
-        </article>
-
-        <article className="panel">
-          <h3>Status distribution</h3>
-          <div className="status-distribution">
-            <div className="status-meter" aria-label="Incident status distribution">
-              {incidents.length > 0 ? (
-                statusCounts
-                  .filter((item) => item.count > 0)
-                  .map((item) => (
-                    <span
-                      className={`status-segment ${statusClassName(item.status)}`}
-                      key={item.status}
-                      style={{ flexGrow: item.count }}
-                      title={`${item.status}: ${item.count}`}
-                    />
-                  ))
-              ) : (
-                <span className="status-segment status-empty" />
-              )}
-            </div>
-            {statusCounts.map((item) => (
-              <ReportBar key={item.status} label={item.status} count={item.count} total={incidents.length} />
-            ))}
-          </div>
-        </article>
-
-        <article className="panel span-panel">
-          <h3>Category mix</h3>
-          {categoryCounts.length > 0 ? (
-            <div className="category-grid">
-              {categoryCounts.map((item) => (
-                <div className="category-pill" key={item.category}>
-                  <span>{item.category}</span>
-                  <strong>{item.count}</strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted-copy">No incident categories to summarize yet.</p>
+            <p className="muted-copy">No exposure data is available.</p>
           )}
         </article>
 
         <article className="panel span-panel">
-          <h3>Repeated pattern analysis</h3>
-          {repeatedPatterns.length > 0 ? (
-            <div className="pattern-list">
-              {repeatedPatterns.map((pattern) => (
+          <h3>Management update</h3>
+          <p className="muted-copy">
+            Current risk operations focus is on high-severity payment incidents, reconciliation breaks, SLA pressure,
+            and customer-impacting payment exceptions. Demo outputs are structured for management communication and
+            interview walkthroughs, not operational use with real banking data.
+          </p>
+        </article>
+
+        <article className="panel span-panel">
+          <h3>Next steps</h3>
+          <div className="pattern-list">
+            {repeatedPatterns.length > 0 ? (
+              repeatedPatterns.map((pattern) => (
                 <div className="pattern-item" key={pattern.category}>
                   <strong>{pattern.category}</strong>
-                  <p>
-                    Pattern detected: {pattern.count} incidents. {pattern.opportunity}
-                  </p>
+                  <p>{pattern.opportunity}</p>
                   <p>{pattern.followUp}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted-copy">No repeated incident categories detected yet.</p>
-          )}
+              ))
+            ) : (
+              <p className="muted-copy">
+                Continue monitoring demo incidents, confirm ownership, and validate reconciliation evidence before closure.
+              </p>
+            )}
+          </div>
         </article>
       </div>
     </section>
   );
 }
 
-const statusToneClass: Record<IncidentStatus, string> = {
-  Open: "status-open",
-  Investigating: "status-investigating",
-  Escalated: "status-escalated",
-  Monitoring: "status-monitoring",
-  Resolved: "status-resolved",
-  Closed: "status-closed",
-};
-
-function statusClassName(status: IncidentStatus) {
-  return statusToneClass[status];
-}
-
-function ReportBar({ label, count, total }: { label: IncidentStatus; count: number; total: number }) {
+function ReportBar({ label, count, total }: { label: Severity; count: number; total: number }) {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
   const width = count > 0 ? Math.max(8, percentage) : 0;
 
   return (
     <div className="report-bar">
       <div className="report-bar-meta">
-        <span>
-          <i className={`status-dot ${statusClassName(label)}`} aria-hidden="true" />
-          {label}
-        </span>
+        <span>{label}</span>
         <strong>
           {count}
           <small>{percentage}%</small>
         </strong>
       </div>
       <span className="bar-track">
-        <span className={`bar-fill ${statusClassName(label)}`} style={{ width: `${width}%` }} />
+        <span className={`bar-fill ${severityClassName(label)}`} style={{ width: `${width}%` }} />
       </span>
+      <SeverityBadge label={label} />
     </div>
   );
+}
+
+function severityClassName(severity: Severity) {
+  return `severity-${severity.toLowerCase()}`;
 }

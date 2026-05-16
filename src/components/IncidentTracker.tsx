@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge, StatusBadge } from "./Badges";
+import { isReconciliationRisk } from "../logic/incidentRules";
 import { INCIDENT_STATUSES, type Incident, type IncidentStatus } from "../types/incident";
 
 interface IncidentTrackerProps {
@@ -37,11 +38,24 @@ export function IncidentTracker({
     <section className="screen">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Live tracker</p>
+          <p className="eyebrow">Operational risk tracker</p>
           <h2>Incident Tracker</h2>
         </div>
       </div>
       {notice ? <div className="success-message">{notice}</div> : null}
+
+      <div className="dashboard-grid tracker-summary-grid">
+        <RiskView
+          title="Reconciliation Risk View"
+          incidents={incidents.filter(isReconciliationRisk)}
+          emptyCopy="No reconciliation-sensitive incidents are currently open for review."
+        />
+        <RiskView
+          title="SLA & Escalation View"
+          incidents={incidents.filter((incident) => incident.slaStatus !== "On Track" || incident.status === "Escalated")}
+          emptyCopy="No incidents currently require SLA or escalation attention."
+        />
+      </div>
 
       <div className="tracker-layout">
         <article className="panel tracker-table">
@@ -50,10 +64,13 @@ export function IncidentTracker({
               <tr>
                 <th>Ref</th>
                 <th>Incident</th>
+                <th>Payment type</th>
                 <th>Category</th>
-                <th>Risk</th>
+                <th>Severity</th>
                 <th>SLA</th>
                 <th>Status</th>
+                <th>Owner</th>
+                <th>Impact</th>
               </tr>
             </thead>
             <tbody>
@@ -75,11 +92,12 @@ export function IncidentTracker({
                     <td>{incident.reference}</td>
                     <td>
                       <strong>{incident.title}</strong>
-                      <span>{incident.affectedService}</span>
+                      <span>{incident.recommendedAction}</span>
                     </td>
+                    <td>{incident.paymentType}</td>
                     <td>{incident.category}</td>
                     <td>
-                      <RiskBadge label={incident.riskLabel} />
+                      <SeverityBadge label={incident.severity} />
                     </td>
                     <td>
                       <SlaBadge label={incident.slaStatus} />
@@ -87,11 +105,13 @@ export function IncidentTracker({
                     <td>
                       <StatusBadge label={incident.status} />
                     </td>
+                    <td>{incident.ownerTeam}</td>
+                    <td>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={9}>
                     <p className="muted-copy table-empty">No incidents are available in the tracker.</p>
                   </td>
                 </tr>
@@ -137,6 +157,10 @@ function IncidentDetails({
           <dd>{incident.category}</dd>
         </div>
         <div>
+          <dt>Payment type</dt>
+          <dd>{incident.paymentType}</dd>
+        </div>
+        <div>
           <dt>Severity</dt>
           <dd><SeverityBadge label={incident.severity} /></dd>
         </div>
@@ -151,6 +175,18 @@ function IncidentDetails({
         <div>
           <dt>Reported by</dt>
           <dd>{incident.reportedBy}</dd>
+        </div>
+        <div>
+          <dt>Owner/team</dt>
+          <dd>{incident.ownerTeam}</dd>
+        </div>
+        <div>
+          <dt>Impact</dt>
+          <dd>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")}</dd>
+        </div>
+        <div>
+          <dt>Customers</dt>
+          <dd>{incident.affectedCustomers}</dd>
         </div>
       </dl>
 
@@ -170,8 +206,13 @@ function IncidentDetails({
       </label>
 
       <article className="summary-panel compact">
-        <h4>Stakeholder summary</h4>
-        <p>{incident.stakeholderSummary}</p>
+        <h4>Recommended next action</h4>
+        <p>{incident.recommendedAction}</p>
+      </article>
+
+      <article className="summary-panel compact">
+        <h4>Escalation and reconciliation</h4>
+        <p>{incident.escalationRequirement} {incident.reconciliationPriority}.</p>
       </article>
 
       <article className="summary-panel compact">
@@ -202,5 +243,34 @@ function IncidentDetails({
         <p>{incident.stakeholderUpdateDraft}</p>
       </article>
     </aside>
+  );
+}
+
+function RiskView({ title, incidents, emptyCopy }: { title: string; incidents: Incident[]; emptyCopy: string }) {
+  const topIncidents = [...incidents].sort((a, b) => b.riskScore - a.riskScore).slice(0, 3);
+
+  return (
+    <article className="panel">
+      <h3>{title}</h3>
+      <div className="incident-list">
+        {topIncidents.length > 0 ? (
+          topIncidents.map((incident) => (
+            <div className="incident-row" key={incident.id}>
+              <div>
+                <strong>{incident.reference}: {incident.paymentType}</strong>
+                <span>{incident.category} · {incident.ownerTeam}</span>
+                <span>{incident.recommendedAction}</span>
+              </div>
+              <div className="row-badges">
+                <RiskBadge label={incident.riskLabel} />
+                <SlaBadge label={incident.slaStatus} />
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="muted-copy">{emptyCopy}</p>
+        )}
+      </div>
+    </article>
   );
 }

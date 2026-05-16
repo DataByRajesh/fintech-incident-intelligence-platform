@@ -7,8 +7,13 @@ import { Reports } from "./components/Reports";
 import {
   createIncident,
   generateBusinessImpactReasoning,
+  generateStakeholderSummary,
   generateStakeholderUpdateDraft,
+  getEscalationRequirement,
   getInvestigationPlaybook,
+  getRecommendedAction,
+  getReconciliationPriority,
+  getReportingNote,
 } from "./logic/incidentRules";
 import { demoIncidents } from "./data/demoIncidents";
 import {
@@ -21,14 +26,27 @@ import {
   type Incident,
   type IncidentDraft,
   type IncidentStatus,
+  type PaymentType,
   type WorkaroundAvailability,
 } from "./types/incident";
 
-type Screen = "dashboard" | "add" | "result" | "tracker" | "reports";
+type Screen = "dashboard" | "workbench" | "tracker" | "reports";
 
 const storageKey = "fintech-incident-intelligence-incidents";
 const impactLevels: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
 const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
+const paymentTypes: PaymentType[] = [
+  "Faster Payments",
+  "Card Payments",
+  "Open Banking",
+  "BACS",
+  "CHAPS",
+  "SEPA",
+  "SWIFT",
+  "Chargeback",
+  "Internal Ledger",
+  "Other",
+];
 
 function isOneOf<T extends string>(value: unknown, options: readonly T[]): value is T {
   return typeof value === "string" && options.includes(value as T);
@@ -45,7 +63,6 @@ function isBaseIncident(value: unknown): value is Incident {
     incident.description,
     incident.reportedBy,
     incident.affectedService,
-    incident.stakeholderSummary,
     incident.createdAt,
     incident.updatedAt,
   ];
@@ -62,6 +79,11 @@ function isBaseIncident(value: unknown): value is Incident {
     isOneOf(incident.systemImpact, impactLevels) &&
     isOneOf(incident.complianceSensitivity, impactLevels) &&
     isOneOf(incident.workaroundAvailability, workaroundOptions) &&
+    (incident.paymentType === undefined || isOneOf(incident.paymentType, paymentTypes)) &&
+    (incident.incidentCategory === undefined || isOneOf(incident.incidentCategory, INCIDENT_CATEGORIES)) &&
+    (incident.affectedCustomers === undefined || typeof incident.affectedCustomers === "number") &&
+    (incident.transactionCount === undefined || typeof incident.transactionCount === "number") &&
+    (incident.estimatedFinancialImpact === undefined || typeof incident.estimatedFinancialImpact === "number") &&
     isOneOf(incident.category, INCIDENT_CATEGORIES) &&
     isOneOf(incident.severity, SEVERITIES) &&
     isOneOf(incident.riskLabel, RISK_LABELS) &&
@@ -71,33 +93,63 @@ function isBaseIncident(value: unknown): value is Incident {
 }
 
 function normalizeIncident(incident: Incident): Incident {
-  const intelligenceContext = {
-    category: incident.category,
-    riskLabel: incident.riskLabel,
-    riskScore: incident.riskScore,
-    slaStatus: incident.slaStatus,
-    severity: incident.severity,
+  const baseIncident = {
+    ...incident,
+    paymentType: incident.paymentType ?? "Other",
+    incidentCategory: incident.incidentCategory ?? incident.category,
+    affectedCustomers: Number.isFinite(incident.affectedCustomers) ? incident.affectedCustomers : 1,
+    transactionCount: Number.isFinite(incident.transactionCount) ? incident.transactionCount : 1,
+    estimatedFinancialImpact: Number.isFinite(incident.estimatedFinancialImpact) ? incident.estimatedFinancialImpact : 0,
+    ownerTeam: typeof incident.ownerTeam === "string" && incident.ownerTeam.trim() ? incident.ownerTeam : incident.reportedBy,
+    notes: typeof incident.notes === "string" ? incident.notes : "",
   };
-  const playbook = getInvestigationPlaybook(incident.category);
+  const intelligenceContext = {
+    category: baseIncident.category,
+    riskLabel: baseIncident.riskLabel,
+    riskScore: baseIncident.riskScore,
+    slaStatus: baseIncident.slaStatus,
+    severity: baseIncident.severity,
+  };
+  const playbook = getInvestigationPlaybook(baseIncident.category);
 
   return {
-    ...incident,
+    ...baseIncident,
+    stakeholderSummary:
+      typeof baseIncident.stakeholderSummary === "string" && baseIncident.stakeholderSummary.trim()
+        ? baseIncident.stakeholderSummary
+        : generateStakeholderSummary(baseIncident, intelligenceContext),
     businessImpactReasoning:
-      typeof incident.businessImpactReasoning === "string" && incident.businessImpactReasoning.trim()
-        ? incident.businessImpactReasoning
-        : generateBusinessImpactReasoning(incident, intelligenceContext),
+      typeof baseIncident.businessImpactReasoning === "string" && baseIncident.businessImpactReasoning.trim()
+        ? baseIncident.businessImpactReasoning
+        : generateBusinessImpactReasoning(baseIncident, intelligenceContext),
     investigationPlaybook:
-      Array.isArray(incident.investigationPlaybook) && incident.investigationPlaybook.length > 0
-        ? incident.investigationPlaybook
+      Array.isArray(baseIncident.investigationPlaybook) && baseIncident.investigationPlaybook.length > 0
+        ? baseIncident.investigationPlaybook
         : playbook.steps,
     rcaHypotheses:
-      Array.isArray(incident.rcaHypotheses) && incident.rcaHypotheses.length > 0
-        ? incident.rcaHypotheses
+      Array.isArray(baseIncident.rcaHypotheses) && baseIncident.rcaHypotheses.length > 0
+        ? baseIncident.rcaHypotheses
         : playbook.rcaHypotheses,
     stakeholderUpdateDraft:
-      typeof incident.stakeholderUpdateDraft === "string" && incident.stakeholderUpdateDraft.trim()
-        ? incident.stakeholderUpdateDraft
-        : generateStakeholderUpdateDraft(incident, intelligenceContext),
+      typeof baseIncident.stakeholderUpdateDraft === "string" && baseIncident.stakeholderUpdateDraft.trim()
+        ? baseIncident.stakeholderUpdateDraft
+        : generateStakeholderUpdateDraft(baseIncident, intelligenceContext),
+    recommendedAction:
+      typeof baseIncident.recommendedAction === "string" && baseIncident.recommendedAction.trim()
+        ? baseIncident.recommendedAction
+        : getRecommendedAction(baseIncident, intelligenceContext),
+    escalationRequirement:
+      typeof baseIncident.escalationRequirement === "string" && baseIncident.escalationRequirement.trim()
+        ? baseIncident.escalationRequirement
+        : getEscalationRequirement(intelligenceContext),
+    reconciliationPriority:
+      typeof baseIncident.reconciliationPriority === "string" && baseIncident.reconciliationPriority.trim()
+        ? baseIncident.reconciliationPriority
+        : getReconciliationPriority(intelligenceContext),
+    reportingNote:
+      typeof baseIncident.reportingNote === "string" && baseIncident.reportingNote.trim()
+        ? baseIncident.reportingNote
+        : getReportingNote(baseIncident, intelligenceContext),
   };
 }
 
@@ -147,7 +199,7 @@ export default function App() {
     setLatestIncidentId(incident.id);
     setSelectedIncidentId(incident.id);
     setNotice(`${incident.reference} logged and classified successfully.`);
-    setScreen("result");
+    setScreen("workbench");
   }
 
   function handleStatusUpdate(id: string, status: IncidentStatus) {
@@ -163,13 +215,12 @@ export default function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">FinTech Operational Resilience</p>
-          <h1>Incident Intelligence Platform</h1>
+          <h1>Fintech Incident Intelligence & Risk Operations Platform</h1>
         </div>
         <nav className="app-nav" aria-label="Primary">
           {[
             ["dashboard", "Dashboard"],
-            ["add", "Add Incident"],
-            ["result", "Classification Result"],
+            ["workbench", "Workbench"],
             ["tracker", "Incident Tracker"],
             ["reports", "Reports"],
           ].map(([key, label]) => (
@@ -190,9 +241,11 @@ export default function App() {
         {screen === "dashboard" ? (
           <Dashboard incidents={incidents} onNavigate={navigate} notice={notice} />
         ) : null}
-        {screen === "add" ? <AddIncidentForm onSubmit={handleIncidentSubmit} /> : null}
-        {screen === "result" ? (
-          <ClassificationResult incident={latestIncident} onNavigate={navigate} />
+        {screen === "workbench" ? (
+          <>
+            <AddIncidentForm onSubmit={handleIncidentSubmit} />
+            <ClassificationResult incident={latestIncident} onNavigate={navigate} />
+          </>
         ) : null}
         {screen === "tracker" ? (
           <IncidentTracker

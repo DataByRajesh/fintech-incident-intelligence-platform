@@ -1,20 +1,39 @@
 import { useMemo, useState } from "react";
-import type { ImpactLevel, IncidentDraft, WorkaroundAvailability } from "../types/incident";
+import { INCIDENT_CATEGORIES, type ImpactLevel, type IncidentDraft, type PaymentType, type WorkaroundAvailability } from "../types/incident";
 
 const impactOptions: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
 const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
+const paymentTypeOptions: PaymentType[] = [
+  "Faster Payments",
+  "Card Payments",
+  "Open Banking",
+  "BACS",
+  "CHAPS",
+  "SEPA",
+  "SWIFT",
+  "Chargeback",
+  "Internal Ledger",
+  "Other",
+];
 
 const emptyDraft: IncidentDraft = {
   title: "",
   description: "",
   reportedBy: "",
   affectedService: "",
+  paymentType: "Faster Payments",
+  incidentCategory: "Unknown / Needs Review",
+  affectedCustomers: 0,
+  transactionCount: 0,
+  estimatedFinancialImpact: 0,
   customerImpact: "Medium",
   financialImpact: "Medium",
   slaUrgency: "Medium",
   systemImpact: "Medium",
   complianceSensitivity: "Medium",
   workaroundAvailability: "Partial",
+  ownerTeam: "",
+  notes: "",
 };
 
 interface AddIncidentFormProps {
@@ -32,6 +51,7 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
         ["description", draft.description],
         ["reported by", draft.reportedBy],
         ["affected service", draft.affectedService],
+        ["owner/team", draft.ownerTeam],
       ].filter(([, value]) => !String(value).trim()),
     [draft],
   );
@@ -55,6 +75,11 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
       description: draft.description.trim(),
       reportedBy: draft.reportedBy.trim(),
       affectedService: draft.affectedService.trim(),
+      ownerTeam: draft.ownerTeam.trim(),
+      notes: draft.notes.trim(),
+      affectedCustomers: Math.max(0, Math.round(draft.affectedCustomers)),
+      transactionCount: Math.max(0, Math.round(draft.transactionCount)),
+      estimatedFinancialImpact: Math.max(0, draft.estimatedFinancialImpact),
     });
     setDraft(emptyDraft);
   }
@@ -69,7 +94,7 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Incident intake</p>
-          <h2>Add Incident</h2>
+          <h2>Payment Incident Triage & Reconciliation Workbench</h2>
         </div>
       </div>
 
@@ -85,12 +110,40 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
               placeholder="Payment provider API timeout"
             />
           </label>
+          <SelectField
+            label="Payment rail/type"
+            value={draft.paymentType}
+            options={paymentTypeOptions}
+            onChange={(value) => updateField("paymentType", value)}
+          />
           <label>
             Reported by
             <input
               value={draft.reportedBy}
               onChange={(event) => updateField("reportedBy", event.target.value)}
               placeholder="Production Support"
+            />
+          </label>
+          <label>
+            Owner/team
+            <input
+              value={draft.ownerTeam}
+              onChange={(event) => updateField("ownerTeam", event.target.value)}
+              placeholder="Payments Operations"
+            />
+          </label>
+          <SelectField
+            label="Incident category"
+            value={draft.incidentCategory}
+            options={[...INCIDENT_CATEGORIES]}
+            onChange={(value) => updateField("incidentCategory", value)}
+          />
+          <label>
+            Affected service
+            <input
+              value={draft.affectedService}
+              onChange={(event) => updateField("affectedService", event.target.value)}
+              placeholder="Payment gateway"
             />
           </label>
           <label className="span-2">
@@ -103,11 +156,34 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
             />
           </label>
           <label>
-            Affected service
+            Affected customers
             <input
-              value={draft.affectedService}
-              onChange={(event) => updateField("affectedService", event.target.value)}
-              placeholder="Payment gateway"
+              min="0"
+              type="number"
+              value={draft.affectedCustomers}
+              onChange={(event) => updateField("affectedCustomers", Number(event.target.value))}
+              placeholder="125"
+            />
+          </label>
+          <label>
+            Transaction count
+            <input
+              min="0"
+              type="number"
+              value={draft.transactionCount}
+              onChange={(event) => updateField("transactionCount", Number(event.target.value))}
+              placeholder="420"
+            />
+          </label>
+          <label>
+            Estimated financial impact (GBP)
+            <input
+              min="0"
+              step="100"
+              type="number"
+              value={draft.estimatedFinancialImpact}
+              onChange={(event) => updateField("estimatedFinancialImpact", Number(event.target.value))}
+              placeholder="25000"
             />
           </label>
           <SelectField
@@ -146,6 +222,15 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
             options={workaroundOptions}
             onChange={(value) => updateField("workaroundAvailability", value)}
           />
+          <label className="span-2">
+            Notes
+            <textarea
+              value={draft.notes}
+              onChange={(event) => updateField("notes", event.target.value)}
+              placeholder="Add reconciliation notes, provider references, customer handling details, or current assumptions."
+              rows={4}
+            />
+          </label>
         </div>
 
         {!canSubmit ? (

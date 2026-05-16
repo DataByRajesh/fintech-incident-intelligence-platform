@@ -3,7 +3,7 @@ import type { Incident } from "../types/incident";
 
 interface ClassificationResultProps {
   incident: Incident | null;
-  onNavigate: (screen: "add" | "tracker" | "dashboard") => void;
+  onNavigate: (screen: "workbench" | "tracker" | "dashboard") => void;
 }
 
 export function ClassificationResult({ incident, onNavigate }: ClassificationResultProps) {
@@ -11,10 +11,10 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
     return (
       <section className="screen">
         <div className="empty-state">
-          <h2>Classification Result</h2>
+          <h2>Incident Classification Engine</h2>
           <p>No incident has been classified in this session yet.</p>
-          <button className="primary-action" onClick={() => onNavigate("add")} type="button">
-            Log incident
+          <button className="primary-action" onClick={() => onNavigate("workbench")} type="button">
+            Open workbench
           </button>
         </div>
       </section>
@@ -39,6 +39,10 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
           <strong>{incident.category}</strong>
         </article>
         <article className="result-card">
+          <span>Payment type</span>
+          <strong>{incident.paymentType}</strong>
+        </article>
+        <article className="result-card">
           <span>Severity</span>
           <SeverityBadge label={incident.severity} />
         </article>
@@ -57,12 +61,51 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
         </article>
       </div>
 
+      <div className="result-grid result-grid-operations">
+        <article className="result-card">
+          <span>Affected customers</span>
+          <strong>{incident.affectedCustomers}</strong>
+        </article>
+        <article className="result-card">
+          <span>Transactions</span>
+          <strong>{incident.transactionCount}</strong>
+        </article>
+        <article className="result-card">
+          <span>Estimated exposure</span>
+          <strong>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")}</strong>
+        </article>
+        <article className="result-card">
+          <span>Owner/team</span>
+          <strong>{incident.ownerTeam}</strong>
+        </article>
+      </div>
+
       <article className="summary-panel">
-        <h3>Stakeholder summary</h3>
+        <h3>Classification engine output</h3>
         <p>{incident.stakeholderSummary}</p>
       </article>
 
       <div className="intelligence-grid">
+        <article className="summary-panel">
+          <h3>Recommended action</h3>
+          <p>{incident.recommendedAction}</p>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Escalation requirement</h3>
+          <p>{incident.escalationRequirement}</p>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Reconciliation priority</h3>
+          <p>{incident.reconciliationPriority}</p>
+        </article>
+
+        <article className="summary-panel">
+          <h3>Reporting note</h3>
+          <p>{incident.reportingNote}</p>
+        </article>
+
         <article className="summary-panel">
           <h3>Business impact reasoning</h3>
           <p>{incident.businessImpactReasoning}</p>
@@ -93,8 +136,8 @@ export function ClassificationResult({ incident, onNavigate }: ClassificationRes
       </div>
 
       <div className="action-row">
-        <button className="secondary-action" onClick={() => onNavigate("add")} type="button">
-          Add another incident
+        <button className="secondary-action" onClick={() => onNavigate("workbench")} type="button">
+          Continue in workbench
         </button>
         <button className="primary-action" onClick={() => onNavigate("dashboard")} type="button">
           Return to dashboard

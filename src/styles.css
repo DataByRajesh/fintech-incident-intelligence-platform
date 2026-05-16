@@ -201,6 +201,11 @@ main {
 .result-card strong {
   font-size: clamp(1.7rem, 3vw, 2.4rem);
   line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.result-grid-operations .result-card strong {
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
 }
 
 .dashboard-grid,
@@ -420,7 +425,8 @@ textarea:focus {
 }
 
 .pattern-panel p,
-.pattern-item p {
+.pattern-item p,
+.governance-panel p {
   color: #43546a;
   line-height: 1.6;
   margin: 0;
@@ -428,9 +434,15 @@ textarea:focus {
 
 .pattern-panel,
 .pattern-list,
-.pattern-item {
+.pattern-item,
+.governance-panel {
   display: grid;
   gap: 10px;
+}
+
+.governance-panel {
+  background: #f8fbfc;
+  border-color: #bfd6d3;
 }
 
 .pattern-item {
@@ -450,6 +462,10 @@ textarea:focus {
 .tracker-table {
   overflow-x: auto;
   padding: 0;
+}
+
+.tracker-summary-grid {
+  margin-bottom: 18px;
 }
 
 table {
@@ -637,6 +653,22 @@ dd {
 
 .status-closed {
   background: #42526a;
+}
+
+.severity-critical {
+  background: #a51f16;
+}
+
+.severity-high {
+  background: #d26a18;
+}
+
+.severity-medium {
+  background: #5663c1;
+}
+
+.severity-low {
+  background: #0b8a76;
 }
 
 .status-empty {

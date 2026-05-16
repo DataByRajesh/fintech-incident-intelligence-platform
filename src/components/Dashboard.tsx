@@ -1,23 +1,26 @@
 import { RiskBadge, SlaBadge, StatusBadge } from "./Badges";
-import { getRepeatedPatternInsights } from "../logic/incidentRules";
+import { getRepeatedPatternInsights, isReconciliationRisk } from "../logic/incidentRules";
 import type { Incident } from "../types/incident";
 
 interface DashboardProps {
   incidents: Incident[];
-  onNavigate: (screen: "add" | "tracker" | "reports") => void;
+  onNavigate: (screen: "workbench" | "tracker" | "reports") => void;
   notice?: string;
 }
 
 export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
   const openIncidents = incidents.filter((incident) => !["Resolved", "Closed"].includes(incident.status));
-  const criticalRisks = incidents.filter((incident) => incident.riskLabel === "Critical").length;
+  const criticalOrHighRisks = incidents.filter((incident) => ["Critical", "High"].includes(incident.riskLabel)).length;
   const breachedOrEscalated = incidents.filter((incident) =>
     ["Breached", "Escalation Required"].includes(incident.slaStatus),
   ).length;
-  const resolved = incidents.filter((incident) => ["Resolved", "Closed"].includes(incident.status)).length;
+  const reconciliationBreaks = incidents.filter(isReconciliationRisk).length;
+  const estimatedExposure = incidents.reduce((total, incident) => total + incident.estimatedFinancialImpact, 0);
+  const affectedCustomers = incidents.reduce((total, incident) => total + incident.affectedCustomers, 0);
   const latest = [...incidents]
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, 4);
+    .filter((incident) => ["Critical", "High"].includes(incident.riskLabel))
+    .sort((a, b) => b.riskScore - a.riskScore || Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+    .slice(0, 5);
   const repeatedPattern = getRepeatedPatternInsights(incidents)[0];
 
   return (
@@ -25,34 +28,58 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
       {notice ? <div className="success-message">{notice}</div> : null}
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Operational command view</p>
+          <p className="eyebrow">Executive risk dashboard</p>
           <h2>Dashboard</h2>
         </div>
-        <button className="primary-action" onClick={() => onNavigate("add")} type="button">
-          + Log incident
+        <button className="primary-action" onClick={() => onNavigate("workbench")} type="button">
+          + Open workbench
         </button>
       </div>
 
       <div className="metric-grid">
         <article className="metric-card">
-          <span>Active incidents</span>
+          <span>Total incidents</span>
+          <strong>{incidents.length}</strong>
+        </article>
+        <article className="metric-card">
+          <span>Critical/high incidents</span>
+          <strong>{criticalOrHighRisks}</strong>
+        </article>
+        <article className="metric-card">
+          <span>Open incidents</span>
           <strong>{openIncidents.length}</strong>
         </article>
         <article className="metric-card">
-          <span>Critical risk</span>
-          <strong>{criticalRisks}</strong>
-        </article>
-        <article className="metric-card">
-          <span>SLA pressure</span>
+          <span>SLA risk</span>
           <strong>{breachedOrEscalated}</strong>
         </article>
         <article className="metric-card">
-          <span>Resolved/closed</span>
-          <strong>{resolved}</strong>
+          <span>Reconciliation breaks</span>
+          <strong>{reconciliationBreaks}</strong>
+        </article>
+        <article className="metric-card">
+          <span>Estimated exposure</span>
+          <strong>GBP {estimatedExposure.toLocaleString("en-GB")}</strong>
+        </article>
+        <article className="metric-card">
+          <span>Affected customers</span>
+          <strong>{affectedCustomers.toLocaleString("en-GB")}</strong>
+        </article>
+        <article className="metric-card">
+          <span>High-risk open</span>
+          <strong>{openIncidents.filter((incident) => ["Critical", "High"].includes(incident.riskLabel)).length}</strong>
         </article>
       </div>
 
       <div className="dashboard-grid">
+        <article className="panel span-panel governance-panel">
+          <p>
+            Built as a practical MVP to demonstrate fintech incident triage, payment operations awareness,
+            reconciliation risk handling, and structured reporting for regulated environments.
+          </p>
+          <p>Demo system only. No real customer, transaction, or banking data is used.</p>
+        </article>
+
         {repeatedPattern ? (
           <article className="panel span-panel pattern-panel">
             <p className="eyebrow">Repeated pattern insight</p>
@@ -66,7 +93,7 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
 
         <article className="panel">
           <div className="panel-heading">
-            <h3>Latest incident movement</h3>
+            <h3>Recent high-risk incidents</h3>
             <button className="text-action" onClick={() => onNavigate("tracker")} type="button">
               View tracker
             </button>
@@ -77,7 +104,8 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
                 <div className="incident-row" key={incident.id}>
                   <div>
                     <strong>{incident.reference}</strong>
-                    <span>{incident.title}</span>
+                    <span>{incident.title} · {incident.paymentType}</span>
+                    <span>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")} exposure · {incident.affectedCustomers} customers</span>
                   </div>
                   <div className="row-badges">
                     <RiskBadge label={incident.riskLabel} />
@@ -86,7 +114,7 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
                 </div>
               ))
             ) : (
-              <p className="muted-copy">No incident movement yet.</p>
+              <p className="muted-copy">No high-risk incidents are currently visible.</p>
             )}
           </div>
         </article>

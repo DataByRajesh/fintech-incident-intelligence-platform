@@ -21,10 +21,17 @@ export const SLA_STATUSES = [
 export const INCIDENT_CATEGORIES = [
   "Payment Failure",
   "Transaction Delay",
+  "Settlement Delay",
   "Account Access Issue",
   "KYC / Verification Issue",
   "API Error",
   "Reconciliation Mismatch",
+  "Duplicate Debit",
+  "Chargeback Spike",
+  "File Processing Exception",
+  "Suspicious Transaction Alert",
+  "High-Value Payment Delay",
+  "Payment Investigation",
   "Customer Support Escalation",
   "Data Mismatch",
   "System Outage",
@@ -41,6 +48,17 @@ export type IncidentCategory = (typeof INCIDENT_CATEGORIES)[number];
 
 export type ImpactLevel = "Low" | "Medium" | "High" | "Critical";
 export type WorkaroundAvailability = "Available" | "Partial" | "Unavailable";
+export type PaymentType =
+  | "Faster Payments"
+  | "Card Payments"
+  | "Open Banking"
+  | "BACS"
+  | "CHAPS"
+  | "SEPA"
+  | "SWIFT"
+  | "Chargeback"
+  | "Internal Ledger"
+  | "Other";
 
 export interface RiskInputs {
   customerImpact: ImpactLevel;
@@ -56,6 +74,13 @@ export interface IncidentDraft extends RiskInputs {
   description: string;
   reportedBy: string;
   affectedService: string;
+  paymentType: PaymentType;
+  incidentCategory: IncidentCategory;
+  affectedCustomers: number;
+  transactionCount: number;
+  estimatedFinancialImpact: number;
+  ownerTeam: string;
+  notes: string;
 }
 
 export interface InvestigationPlaybook {
@@ -84,6 +109,10 @@ export interface Incident extends IncidentDraft {
   investigationPlaybook: string[];
   rcaHypotheses: string[];
   stakeholderUpdateDraft: string;
+  recommendedAction: string;
+  escalationRequirement: string;
+  reconciliationPriority: string;
+  reportingNote: string;
   createdAt: string;
   updatedAt: string;
 }
