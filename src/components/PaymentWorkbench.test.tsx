@@ -9,6 +9,7 @@ describe("Payment Incident Triage & Reconciliation Workbench", () => {
 
     expect(screen.getByRole("button", { name: /classify incident/i })).toBeDisabled();
     expect(screen.getByText(/submit is available after/i)).toBeInTheDocument();
+    expect(screen.getByText(/do not enter real customer/i)).toBeInTheDocument();
   });
 
   it("submits a normalized payment incident draft", async () => {
@@ -39,5 +40,17 @@ describe("Payment Incident Triage & Reconciliation Workbench", () => {
         ownerTeam: "Back Office Operations",
       }),
     );
+  });
+
+  it("clears the form without submitting", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<AddIncidentForm onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText(/incident title/i), "Temporary incident");
+    await user.click(screen.getByRole("button", { name: /clear form/i }));
+
+    expect(screen.getByLabelText(/incident title/i)).toHaveValue("");
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

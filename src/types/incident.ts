@@ -1,8 +1,8 @@
 export const INCIDENT_STATUSES = [
-  "Open",
-  "Investigating",
+  "New",
+  "Under Review",
   "Escalated",
-  "Monitoring",
+  "Awaiting Reconciliation",
   "Resolved",
   "Closed",
 ] as const;
@@ -80,6 +80,14 @@ export interface IncidentDraft extends RiskInputs {
   notes: string;
 }
 
+export interface IncidentAuditEntry {
+  action: "Created" | "Status changed" | "Migrated";
+  status: IncidentStatus;
+  actor: string;
+  note: string;
+  timestamp: string;
+}
+
 export interface InvestigationPlaybook {
   steps: string[];
   rcaHypotheses: string[];
@@ -110,6 +118,7 @@ export interface Incident extends IncidentDraft {
   escalationRequirement: string;
   reconciliationPriority: string;
   reportingNote: string;
+  auditTrail: IncidentAuditEntry[];
   createdAt: string;
   updatedAt: string;
 }

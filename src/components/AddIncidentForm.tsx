@@ -81,6 +81,11 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
     setDraft(emptyDraft);
   }
 
+  function resetForm() {
+    setDraft(emptyDraft);
+    setError("");
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     submitDraft();
@@ -96,6 +101,9 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
       </div>
 
       <form className="form-panel" onSubmit={handleSubmit} noValidate>
+        <div className="disclaimer-message">
+          Demo-only workspace. Do not enter real customer, transaction, account, or banking data.
+        </div>
         {error ? <div className="error-message">{error}</div> : null}
 
         <div className="form-grid">
@@ -235,15 +243,20 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
             Submit is available after the required incident details are complete.
           </p>
         ) : null}
-        <button
-          aria-describedby={!canSubmit ? "submit-disabled-reason" : undefined}
-          className="primary-action"
-          disabled={!canSubmit}
-          title={!canSubmit ? "Complete the required incident details before classifying." : "Classify incident"}
-          type="submit"
-        >
-          Classify incident
-        </button>
+        <div className="form-actions">
+          <button
+            aria-describedby={!canSubmit ? "submit-disabled-reason" : undefined}
+            className="primary-action"
+            disabled={!canSubmit}
+            title={!canSubmit ? "Complete the required incident details before classifying." : "Classify incident"}
+            type="submit"
+          >
+            Classify incident
+          </button>
+          <button className="secondary-action" onClick={resetForm} type="button">
+            Clear form
+          </button>
+        </div>
       </form>
     </section>
   );

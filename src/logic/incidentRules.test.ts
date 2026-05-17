@@ -155,5 +155,12 @@ describe("incidentRules classification engine", () => {
     expect(incident.escalationRequirement).toBeTruthy();
     expect(incident.reconciliationPriority).toBeTruthy();
     expect(incident.reportingNote).toBeTruthy();
+    expect(incident.auditTrail[0]).toEqual(
+      expect.objectContaining({
+        action: "Created",
+        status: "New",
+        actor: "Payments Operations",
+      }),
+    );
   });
 });

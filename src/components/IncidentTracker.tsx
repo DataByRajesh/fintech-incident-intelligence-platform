@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge, StatusBadge } from "./Badges";
 import { isReconciliationRisk } from "../logic/incidentRules";
-import { INCIDENT_STATUSES, type Incident, type IncidentStatus } from "../types/incident";
+import {
+  INCIDENT_STATUSES,
+  SEVERITIES,
+  type Incident,
+  type IncidentStatus,
+  type PaymentType,
+  type Severity,
+  type SlaStatus,
+} from "../types/incident";
 
 interface IncidentTrackerProps {
   incidents: Incident[];
@@ -10,6 +18,24 @@ interface IncidentTrackerProps {
   onUpdateStatus: (id: string, status: IncidentStatus) => void;
 }
 
+type TrackerSort = "Severity" | "SLA risk";
+
+const paymentTypes: PaymentType[] = ["Faster Payments", "BACS", "CHAPS", "Card", "Open Banking", "SWIFT", "SEPA"];
+
+const severityRank: Record<Severity, number> = {
+  Critical: 4,
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
+
+const slaRank: Record<SlaStatus, number> = {
+  "Escalation Required": 4,
+  Breached: 3,
+  "At Risk": 2,
+  "On Track": 1,
+};
+
 export function IncidentTracker({
   incidents,
   selectedIncidentId,
@@ -17,7 +43,35 @@ export function IncidentTracker({
   onUpdateStatus,
 }: IncidentTrackerProps) {
   const [notice, setNotice] = useState("");
-  const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0] ?? null;
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<IncidentStatus | "All">("All");
+  const [severityFilter, setSeverityFilter] = useState<Severity | "All">("All");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentType | "All">("All");
+  const [sortMode, setSortMode] = useState<TrackerSort>("Severity");
+  const filteredIncidents = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return incidents
+      .filter((incident) => {
+        const matchesQuery =
+          normalizedQuery.length === 0 ||
+          [incident.title, incident.category, incident.ownerTeam, incident.paymentType]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery);
+        const matchesStatus = statusFilter === "All" || incident.status === statusFilter;
+        const matchesSeverity = severityFilter === "All" || incident.severity === severityFilter;
+        const matchesPayment = paymentFilter === "All" || incident.paymentType === paymentFilter;
+
+        return matchesQuery && matchesStatus && matchesSeverity && matchesPayment;
+      })
+      .sort((a, b) => {
+        if (sortMode === "SLA risk") return slaRank[b.slaStatus] - slaRank[a.slaStatus] || b.riskScore - a.riskScore;
+        return severityRank[b.severity] - severityRank[a.severity] || b.riskScore - a.riskScore;
+      });
+  }, [incidents, paymentFilter, query, severityFilter, sortMode, statusFilter]);
+  const selectedIncident =
+    incidents.find((incident) => incident.id === selectedIncidentId) ?? filteredIncidents[0] ?? incidents[0] ?? null;
 
   function handleStatusChange(status: IncidentStatus) {
     if (!selectedIncident) {
@@ -44,15 +98,72 @@ export function IncidentTracker({
       </div>
       {notice ? <div className="success-message">{notice}</div> : null}
 
+      <div className="control-panel" aria-label="Incident tracker filters">
+        <label>
+          Search incidents
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Title, category, owner, payment type"
+          />
+        </label>
+        <label>
+          Severity
+          <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as Severity | "All")}>
+            <option value="All">All severities</option>
+            {SEVERITIES.map((severity) => (
+              <option key={severity} value={severity}>
+                {severity}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Status
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as IncidentStatus | "All")}>
+            <option value="All">All statuses</option>
+            {INCIDENT_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Payment type
+          <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value as PaymentType | "All")}>
+            <option value="All">All payment types</option>
+            {paymentTypes.map((paymentType) => (
+              <option key={paymentType} value={paymentType}>
+                {paymentType}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Sort by
+          <select value={sortMode} onChange={(event) => setSortMode(event.target.value as TrackerSort)}>
+            <option value="Severity">Severity</option>
+            <option value="SLA risk">SLA risk</option>
+          </select>
+        </label>
+        <div className="control-summary">
+          <strong>{filteredIncidents.length}</strong>
+          <span>of {incidents.length} incidents shown</span>
+        </div>
+      </div>
+
       <div className="dashboard-grid tracker-summary-grid">
         <RiskView
           title="Reconciliation Risk View"
           incidents={incidents.filter(isReconciliationRisk)}
+          mode="reconciliation"
           emptyCopy="No reconciliation-sensitive incidents are currently open for review."
         />
         <RiskView
           title="SLA & Escalation View"
           incidents={incidents.filter((incident) => incident.slaStatus !== "On Track" || incident.status === "Escalated")}
+          mode="sla"
           emptyCopy="No incidents currently require SLA or escalation attention."
         />
       </div>
@@ -67,15 +178,19 @@ export function IncidentTracker({
                 <th>Payment type</th>
                 <th>Category</th>
                 <th>Severity</th>
+                <th>Risk</th>
                 <th>SLA</th>
                 <th>Status</th>
                 <th>Owner</th>
+                <th>Reconciliation</th>
+                <th>Customers</th>
                 <th>Impact</th>
+                <th>Recommended next action</th>
               </tr>
             </thead>
             <tbody>
-              {incidents.length > 0 ? (
-                incidents.map((incident) => (
+              {filteredIncidents.length > 0 ? (
+                filteredIncidents.map((incident) => (
                   <tr
                     className={selectedIncident?.id === incident.id ? "selected-row" : ""}
                     key={incident.id}
@@ -92,12 +207,15 @@ export function IncidentTracker({
                     <td>{incident.reference}</td>
                     <td>
                       <strong>{incident.title}</strong>
-                      <span>{incident.recommendedAction}</span>
+                      <span>{incident.affectedService}</span>
                     </td>
                     <td>{incident.paymentType}</td>
                     <td>{incident.category}</td>
                     <td>
                       <SeverityBadge label={incident.severity} />
+                    </td>
+                    <td>
+                      <RiskBadge label={incident.riskLabel} />
                     </td>
                     <td>
                       <SlaBadge label={incident.slaStatus} />
@@ -106,13 +224,16 @@ export function IncidentTracker({
                       <StatusBadge label={incident.status} />
                     </td>
                     <td>{incident.ownerTeam}</td>
+                    <td>{incident.reconciliationPriority}</td>
+                    <td>{incident.affectedCustomers.toLocaleString("en-GB")}</td>
                     <td>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")}</td>
+                    <td>{incident.recommendedAction}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9}>
-                    <p className="muted-copy table-empty">No incidents are available in the tracker.</p>
+                  <td colSpan={13}>
+                    <p className="muted-copy table-empty">No incidents match the current tracker filters.</p>
                   </td>
                 </tr>
               )}
@@ -149,9 +270,13 @@ function IncidentDetails({
         <StatusBadge label={incident.status} />
       </div>
       <h3>{incident.title}</h3>
-      <p>{incident.description}</p>
+      <p>{incident.stakeholderSummary}</p>
 
       <dl className="details-list">
+        <div>
+          <dt>Incident summary</dt>
+          <dd>{incident.description}</dd>
+        </div>
         <div>
           <dt>Category</dt>
           <dd>{incident.category}</dd>
@@ -165,8 +290,12 @@ function IncidentDetails({
           <dd><SeverityBadge label={incident.severity} /></dd>
         </div>
         <div>
-          <dt>Risk score</dt>
-          <dd>{incident.riskScore}/100</dd>
+          <dt>Risk level</dt>
+          <dd><RiskBadge label={incident.riskLabel} /></dd>
+        </div>
+        <div>
+          <dt>Current status</dt>
+          <dd><StatusBadge label={incident.status} /></dd>
         </div>
         <div>
           <dt>SLA status</dt>
@@ -187,6 +316,22 @@ function IncidentDetails({
         <div>
           <dt>Customers</dt>
           <dd>{incident.affectedCustomers}</dd>
+        </div>
+        <div>
+          <dt>Transactions</dt>
+          <dd>{incident.transactionCount.toLocaleString("en-GB")}</dd>
+        </div>
+        <div>
+          <dt>Customer/regulatory impact</dt>
+          <dd>{incident.customerImpact} customer / {incident.complianceSensitivity} regulatory</dd>
+        </div>
+        <div>
+          <dt>Reconciliation priority</dt>
+          <dd>{incident.reconciliationPriority}</dd>
+        </div>
+        <div>
+          <dt>Escalation requirement</dt>
+          <dd>{incident.escalationRequirement}</dd>
         </div>
       </dl>
 
@@ -216,6 +361,16 @@ function IncidentDetails({
       </article>
 
       <article className="summary-panel compact">
+        <h4>Reporting note</h4>
+        <p>{incident.reportingNote}</p>
+      </article>
+
+      <article className="summary-panel compact">
+        <h4>Notes</h4>
+        <p>{incident.notes || "No additional notes captured."}</p>
+      </article>
+
+      <article className="summary-panel compact">
         <h4>Business impact reasoning</h4>
         <p>{incident.businessImpactReasoning}</p>
       </article>
@@ -242,11 +397,34 @@ function IncidentDetails({
         <h4>Stakeholder update draft</h4>
         <p>{incident.stakeholderUpdateDraft}</p>
       </article>
+
+      <article className="summary-panel compact">
+        <h4>Audit trail</h4>
+        <div className="audit-list">
+          {incident.auditTrail.slice(0, 5).map((entry) => (
+            <div className="audit-item" key={`${entry.timestamp}-${entry.action}-${entry.status}`}>
+              <strong>{entry.action}: {entry.status}</strong>
+              <span>{new Date(entry.timestamp).toLocaleString("en-GB")} - {entry.actor}</span>
+              <p>{entry.note}</p>
+            </div>
+          ))}
+        </div>
+      </article>
     </aside>
   );
 }
 
-function RiskView({ title, incidents, emptyCopy }: { title: string; incidents: Incident[]; emptyCopy: string }) {
+function RiskView({
+  title,
+  incidents,
+  emptyCopy,
+  mode,
+}: {
+  title: string;
+  incidents: Incident[];
+  emptyCopy: string;
+  mode: "reconciliation" | "sla";
+}) {
   const topIncidents = [...incidents].sort((a, b) => b.riskScore - a.riskScore).slice(0, 3);
 
   return (
@@ -259,7 +437,11 @@ function RiskView({ title, incidents, emptyCopy }: { title: string; incidents: I
               <div>
                 <strong>{incident.reference}: {incident.paymentType}</strong>
                 <span>{incident.category} - {incident.ownerTeam}</span>
-                <span>{incident.recommendedAction}</span>
+                <span>
+                  {mode === "reconciliation"
+                    ? `Suggested reconciliation follow-up: ${incident.reconciliationPriority}. ${incident.recommendedAction}`
+                    : `Escalation path: ${incident.escalationRequirement} Owner action: ${incident.recommendedAction}`}
+                </span>
               </div>
               <div className="row-badges">
                 <RiskBadge label={incident.riskLabel} />

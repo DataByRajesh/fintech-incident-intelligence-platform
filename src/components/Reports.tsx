@@ -1,5 +1,10 @@
 import { RiskBadge, SeverityBadge, SlaBadge } from "./Badges";
-import { buildManagementReport, getSeverityClassName, getSeverityPercentage } from "../logic/reportBuilder";
+import {
+  buildManagementReport,
+  createReportTextDownloadHref,
+  getSeverityClassName,
+  getSeverityPercentage,
+} from "../logic/reportBuilder";
 import type { Incident, Severity } from "../types/incident";
 
 interface ReportsProps {
@@ -8,6 +13,7 @@ interface ReportsProps {
 
 export function Reports({ incidents }: ReportsProps) {
   const report = buildManagementReport(incidents);
+  const exportHref = createReportTextDownloadHref(incidents);
 
   return (
     <section className="screen">
@@ -16,6 +22,9 @@ export function Reports({ incidents }: ReportsProps) {
           <p className="eyebrow">Structured management reports</p>
           <h2>Reports</h2>
         </div>
+        <a className="secondary-action" download="incident-management-report.txt" href={exportHref}>
+          Download report
+        </a>
       </div>
 
       <div className="metric-grid">
@@ -72,6 +81,11 @@ export function Reports({ incidents }: ReportsProps) {
           ) : (
             <p className="muted-copy">No reconciliation-sensitive incidents are currently present.</p>
           )}
+        </article>
+
+        <article className="panel span-panel">
+          <h3>SLA/escalation summary</h3>
+          <p className="muted-copy">{report.slaEscalationSummary}</p>
         </article>
 
         <article className="panel">

@@ -419,7 +419,7 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
     riskScore,
     riskLabel,
     slaStatus,
-    status: "Open",
+    status: "New",
     stakeholderSummary: generateStakeholderSummary(draft, partialIncident),
     businessImpactReasoning: generateBusinessImpactReasoning(draft, partialIncident),
     investigationPlaybook: playbook.steps,
@@ -429,6 +429,15 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
     escalationRequirement: getEscalationRequirement({ category, riskLabel, slaStatus }),
     reconciliationPriority: getReconciliationPriority({ category, riskLabel }),
     reportingNote: getReportingNote(draft, { category, riskScore, slaStatus }),
+    auditTrail: [
+      {
+        action: "Created",
+        status: "New",
+        actor: draft.ownerTeam,
+        note: "Incident created by deterministic classification workflow.",
+        timestamp: now,
+      },
+    ],
     createdAt: now,
     updatedAt: now,
   };

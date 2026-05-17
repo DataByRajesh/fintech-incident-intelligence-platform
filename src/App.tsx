@@ -31,8 +31,11 @@ import {
 } from "./types/incident";
 
 type Screen = "dashboard" | "workbench" | "tracker" | "reports";
+type IncidentStore = { version: 2; incidents: Incident[] };
+type LegacyIncidentStatus = "Open" | "Investigating" | "Monitoring";
 
 const storageKey = "fintech-incident-intelligence-incidents";
+const storageVersion = 2;
 const impactLevels: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
 const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
 const paymentTypes: PaymentType[] = [
@@ -47,6 +50,18 @@ const paymentTypes: PaymentType[] = [
 
 function isOneOf<T extends string>(value: unknown, options: readonly T[]): value is T {
   return typeof value === "string" && options.includes(value as T);
+}
+
+function normalizeStatus(value: unknown): IncidentStatus {
+  const legacyStatusMap: Record<LegacyIncidentStatus, IncidentStatus> = {
+    Open: "New",
+    Investigating: "Under Review",
+    Monitoring: "Awaiting Reconciliation",
+  };
+
+  if (isOneOf(value, INCIDENT_STATUSES)) return value;
+  if (isOneOf(value, ["Open", "Investigating", "Monitoring"] as const)) return legacyStatusMap[value];
+  return "New";
 }
 
 function isBaseIncident(value: unknown): value is Incident {
@@ -81,15 +96,29 @@ function isBaseIncident(value: unknown): value is Incident {
     (incident.affectedCustomers === undefined || typeof incident.affectedCustomers === "number") &&
     (incident.transactionCount === undefined || typeof incident.transactionCount === "number") &&
     (incident.estimatedFinancialImpact === undefined || typeof incident.estimatedFinancialImpact === "number") &&
+    (incident.auditTrail === undefined ||
+      (Array.isArray(incident.auditTrail) &&
+        incident.auditTrail.every(
+          (entry) =>
+            entry &&
+            typeof entry === "object" &&
+            (isOneOf((entry as { status?: unknown }).status, INCIDENT_STATUSES) ||
+              isOneOf((entry as { status?: unknown }).status, ["Open", "Investigating", "Monitoring"] as const)) &&
+            typeof (entry as { actor?: unknown }).actor === "string" &&
+            typeof (entry as { note?: unknown }).note === "string" &&
+            typeof (entry as { timestamp?: unknown }).timestamp === "string",
+        ))) &&
     isOneOf(incident.category, INCIDENT_CATEGORIES) &&
     isOneOf(incident.severity, SEVERITIES) &&
     isOneOf(incident.riskLabel, RISK_LABELS) &&
     isOneOf(incident.slaStatus, SLA_STATUSES) &&
-    isOneOf(incident.status, INCIDENT_STATUSES)
+    (isOneOf(incident.status, INCIDENT_STATUSES) ||
+      isOneOf(incident.status, ["Open", "Investigating", "Monitoring"] as const))
   );
 }
 
 function normalizeIncident(incident: Incident): Incident {
+  const updatedAt = typeof incident.updatedAt === "string" ? incident.updatedAt : incident.createdAt;
   const baseIncident = {
     ...incident,
     paymentType: incident.paymentType ?? "Faster Payments",
@@ -99,6 +128,8 @@ function normalizeIncident(incident: Incident): Incident {
     estimatedFinancialImpact: Number.isFinite(incident.estimatedFinancialImpact) ? incident.estimatedFinancialImpact : 0,
     ownerTeam: typeof incident.ownerTeam === "string" && incident.ownerTeam.trim() ? incident.ownerTeam : incident.reportedBy,
     notes: typeof incident.notes === "string" ? incident.notes : "",
+    status: normalizeStatus(incident.status),
+    updatedAt,
   };
   const intelligenceContext = {
     category: baseIncident.category,
@@ -147,7 +178,30 @@ function normalizeIncident(incident: Incident): Incident {
       typeof baseIncident.reportingNote === "string" && baseIncident.reportingNote.trim()
         ? baseIncident.reportingNote
         : getReportingNote(baseIncident, intelligenceContext),
+    auditTrail:
+      Array.isArray(baseIncident.auditTrail) && baseIncident.auditTrail.length > 0
+        ? baseIncident.auditTrail.map((entry) => ({ ...entry, status: normalizeStatus(entry.status) }))
+        : [
+            {
+              action: "Migrated",
+              status: baseIncident.status,
+              actor: "System",
+              note: "Existing incident normalized into the production data contract.",
+              timestamp: updatedAt,
+            },
+          ],
   };
+}
+
+function readIncidentStore(parsed: unknown): Incident[] | null {
+  if (Array.isArray(parsed)) return parsed.every(isBaseIncident) ? parsed.map(normalizeIncident) : null;
+
+  if (!parsed || typeof parsed !== "object") return null;
+
+  const store = parsed as Partial<IncidentStore>;
+  return store.version === storageVersion && Array.isArray(store.incidents) && store.incidents.every(isBaseIncident)
+    ? store.incidents.map(normalizeIncident)
+    : null;
 }
 
 function loadIncidents(): Incident[] {
@@ -155,9 +209,7 @@ function loadIncidents(): Incident[] {
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) return demoIncidents;
     const parsed = JSON.parse(stored) as unknown;
-    return Array.isArray(parsed) && parsed.length > 0 && parsed.every(isBaseIncident)
-      ? parsed.map(normalizeIncident)
-      : demoIncidents;
+    return readIncidentStore(parsed) ?? demoIncidents;
   } catch {
     return demoIncidents;
   }
@@ -173,7 +225,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(incidents));
+      window.localStorage.setItem(storageKey, JSON.stringify({ version: storageVersion, incidents }));
       setPersistenceWarning("");
     } catch {
       setPersistenceWarning("Incident changes are visible now, but could not be saved for refresh.");
@@ -201,9 +253,26 @@ export default function App() {
 
   function handleStatusUpdate(id: string, status: IncidentStatus) {
     setIncidents((current) =>
-      current.map((incident) =>
-        incident.id === id ? { ...incident, status, updatedAt: new Date().toISOString() } : incident,
-      ),
+      current.map((incident) => {
+        if (incident.id !== id) return incident;
+
+        const timestamp = new Date().toISOString();
+        return {
+          ...incident,
+          status,
+          updatedAt: timestamp,
+          auditTrail: [
+            {
+              action: "Status changed",
+              status,
+              actor: "Operations user",
+              note: `Status changed from ${incident.status} to ${status}.`,
+              timestamp,
+            },
+            ...incident.auditTrail,
+          ],
+        };
+      }),
     );
   }
 
@@ -241,6 +310,7 @@ export default function App() {
         ) : null}
         {screen === "workbench" ? (
           <>
+            {notice ? <div className="success-message app-message">{notice}</div> : null}
             <AddIncidentForm onSubmit={handleIncidentSubmit} />
             <ClassificationResult incident={latestIncident} onNavigate={navigate} />
           </>

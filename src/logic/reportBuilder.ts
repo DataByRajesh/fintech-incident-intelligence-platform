@@ -9,6 +9,7 @@ export function buildManagementReport(incidents: Incident[]) {
     (incident) => !["Resolved", "Closed"].includes(incident.status) && ["Critical", "High"].includes(incident.riskLabel),
   );
   const escalationItems = incidents.filter((incident) => incident.slaStatus === "Escalation Required");
+  const slaRiskItems = incidents.filter((incident) => ["At Risk", "Breached", "Escalation Required"].includes(incident.slaStatus));
   const repeatedPatterns = getRepeatedPatternInsights(incidents);
   const highestRisk = [...incidents].sort((a, b) => b.riskScore - a.riskScore)[0] ?? null;
   const severityBreakdown = SEVERITIES.map((severity) => ({
@@ -23,6 +24,7 @@ export function buildManagementReport(incidents: Incident[]) {
     reconciliationIncidents,
     highRiskOpen,
     escalationItems,
+    slaRiskItems,
     repeatedPatterns,
     highestRisk,
     severityBreakdown,
@@ -31,6 +33,10 @@ export function buildManagementReport(incidents: Incident[]) {
       reconciliationIncidents.length > 0
         ? `${reconciliationIncidents.length} reconciliation-sensitive incidents require payment operations review.`
         : "No reconciliation-sensitive incidents are currently present.",
+    slaEscalationSummary:
+      slaRiskItems.length > 0
+        ? `${slaRiskItems.length} incidents have SLA risk, including ${escalationItems.length} requiring formal escalation.`
+        : "No incidents currently show SLA or escalation pressure.",
     customerImpactSummary: `Total affected customers: ${affectedCustomers.toLocaleString("en-GB")}. Highest customer exposure: ${Math.max(0, ...incidents.map((incident) => incident.affectedCustomers)).toLocaleString("en-GB")} customers on a single incident.`,
     financialExposureSummary:
       highestRisk
@@ -43,6 +49,91 @@ export function buildManagementReport(incidents: Incident[]) {
         ? repeatedPatterns.map((pattern) => `${pattern.category}: ${pattern.followUp}`)
         : ["Continue monitoring demo incidents, confirm ownership, and validate reconciliation evidence before closure."],
   };
+}
+
+export function buildReportExport(incidents: Incident[]) {
+  const report = buildManagementReport(incidents);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    reportType: "Operational incident management summary",
+    metrics: {
+      totalIncidents: report.totalIncidents,
+      totalExposure: report.totalExposure,
+      affectedCustomers: report.affectedCustomers,
+      highRiskOpen: report.highRiskOpen.length,
+      escalationRequired: report.escalationItems.length,
+      reconciliationSensitive: report.reconciliationIncidents.length,
+    },
+    summaries: {
+      operational: report.operationalSummary,
+      reconciliation: report.reconciliationSummary,
+      slaEscalation: report.slaEscalationSummary,
+      customerImpact: report.customerImpactSummary,
+      financialExposure: report.financialExposureSummary,
+      managementUpdate: report.managementUpdate,
+      nextSteps: report.nextSteps,
+    },
+    incidents: incidents.map((incident) => ({
+      reference: incident.reference,
+      title: incident.title,
+      category: incident.category,
+      paymentType: incident.paymentType,
+      severity: incident.severity,
+      riskLabel: incident.riskLabel,
+      riskScore: incident.riskScore,
+      slaStatus: incident.slaStatus,
+      status: incident.status,
+      ownerTeam: incident.ownerTeam,
+      affectedCustomers: incident.affectedCustomers,
+      transactionCount: incident.transactionCount,
+      estimatedFinancialImpact: incident.estimatedFinancialImpact,
+      reportingNote: incident.reportingNote,
+      updatedAt: incident.updatedAt,
+    })),
+  };
+}
+
+export function buildReportText(incidents: Incident[]) {
+  const report = buildManagementReport(incidents);
+  const severityLines = report.severityBreakdown
+    .map((item) => `- ${item.severity}: ${item.count}`)
+    .join("\n");
+  const nextSteps = report.nextSteps.map((step) => `- ${step}`).join("\n");
+
+  return [
+    "Fintech Incident Intelligence & Risk Operations Platform",
+    "Operational Management Report",
+    "",
+    "Operational summary",
+    report.operationalSummary,
+    "",
+    "Severity breakdown",
+    severityLines,
+    "",
+    "Reconciliation summary",
+    report.reconciliationSummary,
+    "",
+    "SLA/escalation summary",
+    report.slaEscalationSummary,
+    "",
+    "Customer impact summary",
+    report.customerImpactSummary,
+    "",
+    "Financial exposure summary",
+    report.financialExposureSummary,
+    "",
+    "Management update",
+    report.managementUpdate,
+    "",
+    "Next steps",
+    nextSteps,
+  ].join("\n");
+}
+
+export function createReportTextDownloadHref(incidents: Incident[]) {
+  const encoded = encodeURIComponent(buildReportText(incidents));
+  return `data:text/plain;charset=utf-8,${encoded}`;
 }
 
 export function getSeverityPercentage(count: number, total: number) {

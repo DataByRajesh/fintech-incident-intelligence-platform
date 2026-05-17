@@ -36,7 +36,8 @@ body {
 button,
 input,
 select,
-textarea {
+textarea,
+a {
   font: inherit;
 }
 
@@ -179,6 +180,7 @@ main {
   border-color: #cbd7e3;
   color: #19324f;
   font-weight: 800;
+  text-decoration: none;
 }
 
 .text-action {
@@ -435,7 +437,10 @@ textarea:focus {
   outline: 3px solid rgba(11, 107, 92, 0.14);
 }
 
-.form-panel .primary-action {
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
 }
 
@@ -462,6 +467,16 @@ textarea:focus {
 .disabled-reason {
   background: #f5f7fa;
   color: #5c6d80;
+}
+
+.disclaimer-message {
+  background: #f7fafc;
+  border: 1px solid #dbe4ed;
+  border-radius: 8px;
+  color: #5c6d80;
+  font-weight: 800;
+  margin-bottom: 16px;
+  padding: 12px 14px;
 }
 
 .summary-panel {
@@ -499,6 +514,28 @@ textarea:focus {
 
 .compact-list {
   font-size: 0.92rem;
+}
+
+.audit-list {
+  display: grid;
+  gap: 10px;
+}
+
+.audit-item {
+  border-left: 3px solid var(--teal);
+  display: grid;
+  gap: 4px;
+  padding-left: 10px;
+}
+
+.audit-item strong {
+  font-size: 0.92rem;
+}
+
+.audit-item span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .pattern-panel p,
@@ -542,6 +579,42 @@ textarea:focus {
 .tracker-table {
   overflow-x: auto;
   padding: 0;
+}
+
+.control-panel {
+  align-items: end;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(230px, 1fr) repeat(4, minmax(150px, 0.35fr)) auto;
+  margin-bottom: 18px;
+  padding: 16px;
+}
+
+.control-summary {
+  background: #f7fafc;
+  border: 1px solid #e0e7ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 3px;
+  min-height: 42px;
+  min-width: 150px;
+  padding: 9px 12px;
+}
+
+.control-summary strong {
+  color: var(--brand);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.control-summary span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .tracker-summary-grid {
@@ -798,7 +871,8 @@ dd {
   .result-grid,
   .intelligence-grid,
   .dashboard-grid,
-  .tracker-layout {
+  .tracker-layout,
+  .control-panel {
     grid-template-columns: 1fr;
   }
 

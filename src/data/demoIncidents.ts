@@ -197,16 +197,16 @@ const demoDrafts: IncidentDraft[] = [
 export const demoIncidents: Incident[] = demoDrafts.map((draft, index) => {
   const incident = createIncident(draft, index);
   const statuses: Incident["status"][] = [
-    "Open",
-    "Investigating",
+    "New",
+    "Under Review",
     "Escalated",
-    "Monitoring",
-    "Investigating",
-    "Open",
+    "Awaiting Reconciliation",
+    "Under Review",
+    "New",
     "Escalated",
     "Escalated",
-    "Monitoring",
-    "Investigating",
+    "Awaiting Reconciliation",
+    "Under Review",
   ];
 
   return {

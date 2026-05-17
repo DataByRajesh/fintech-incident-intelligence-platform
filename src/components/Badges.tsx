@@ -19,10 +19,10 @@ const slaTone: Record<SlaStatus, BadgeTone> = {
 };
 
 const statusTone: Record<IncidentStatus, BadgeTone> = {
-  Open: "neutral",
-  Investigating: "warning",
+  New: "neutral",
+  "Under Review": "warning",
   Escalated: "high",
-  Monitoring: "low",
+  "Awaiting Reconciliation": "medium",
   Resolved: "success",
   Closed: "success",
 };

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { demoIncidents } from "../data/demoIncidents";
-import { buildManagementReport, getSeverityClassName, getSeverityPercentage } from "./reportBuilder";
+import {
+  buildManagementReport,
+  buildReportExport,
+  buildReportText,
+  createReportTextDownloadHref,
+  getSeverityClassName,
+  getSeverityPercentage,
+} from "./reportBuilder";
 
 describe("buildManagementReport", () => {
   it("builds an operational summary with incident count", () => {
@@ -23,6 +30,7 @@ describe("buildManagementReport", () => {
 
     expect(report.reconciliationIncidents.length).toBeGreaterThan(0);
     expect(report.reconciliationSummary.toLowerCase()).toContain("reconciliation");
+    expect(report.slaEscalationSummary.toLowerCase()).toContain("sla");
   });
 
   it("calculates customer impact and financial exposure", () => {
@@ -47,5 +55,17 @@ describe("buildManagementReport", () => {
     expect(getSeverityPercentage(2, 10)).toBe(20);
     expect(getSeverityPercentage(0, 0)).toBe(0);
     expect(getSeverityClassName("Critical")).toBe("severity-critical");
+  });
+
+  it("builds a structured report export payload", () => {
+    const exportPayload = buildReportExport(demoIncidents);
+    const reportText = buildReportText(demoIncidents);
+    const href = createReportTextDownloadHref(demoIncidents);
+
+    expect(exportPayload.reportType).toBe("Operational incident management summary");
+    expect(exportPayload.metrics.totalIncidents).toBe(demoIncidents.length);
+    expect(exportPayload.incidents[0]).toHaveProperty("reference");
+    expect(reportText).toContain("SLA/escalation summary");
+    expect(href).toContain("data:text/plain");
   });
 });
