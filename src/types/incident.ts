@@ -88,6 +88,22 @@ export interface IncidentAuditEntry {
   timestamp: string;
 }
 
+export type IncidentTimelineType =
+  | "Created"
+  | "Classified"
+  | "Escalation Recommended"
+  | "Reconciliation Review"
+  | "Status Updated"
+  | "Reported";
+
+export interface IncidentTimelineItem {
+  id: string;
+  timestamp: string;
+  type: IncidentTimelineType;
+  label: string;
+  description: string;
+}
+
 export interface InvestigationPlaybook {
   steps: string[];
   rcaHypotheses: string[];
@@ -119,6 +135,7 @@ export interface Incident extends IncidentDraft {
   reconciliationPriority: string;
   reportingNote: string;
   auditTrail: IncidentAuditEntry[];
+  timeline: IncidentTimelineItem[];
   createdAt: string;
   updatedAt: string;
 }

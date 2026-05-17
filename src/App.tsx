@@ -17,6 +17,7 @@ import {
 } from "./logic/incidentRules";
 import { demoIncidents } from "./data/demoIncidents";
 import { demoScenarios, getDemoScenario } from "./data/demoScenarios";
+import { buildInitialTimeline, createStatusTimelineEvent, getIncidentTimeline, sortTimeline } from "./logic/activityTimeline";
 import {
   INCIDENT_CATEGORIES,
   INCIDENT_STATUSES,
@@ -109,6 +110,18 @@ function isBaseIncident(value: unknown): value is Incident {
             typeof (entry as { note?: unknown }).note === "string" &&
             typeof (entry as { timestamp?: unknown }).timestamp === "string",
         ))) &&
+    (incident.timeline === undefined ||
+      (Array.isArray(incident.timeline) &&
+        incident.timeline.every(
+          (entry) =>
+            entry &&
+            typeof entry === "object" &&
+            typeof (entry as { id?: unknown }).id === "string" &&
+            typeof (entry as { timestamp?: unknown }).timestamp === "string" &&
+            typeof (entry as { type?: unknown }).type === "string" &&
+            typeof (entry as { label?: unknown }).label === "string" &&
+            typeof (entry as { description?: unknown }).description === "string",
+        ))) &&
     isOneOf(incident.category, INCIDENT_CATEGORIES) &&
     isOneOf(incident.severity, SEVERITIES) &&
     isOneOf(incident.riskLabel, RISK_LABELS) &&
@@ -141,7 +154,7 @@ function normalizeIncident(incident: Incident): Incident {
   };
   const playbook = getInvestigationPlaybook(baseIncident.category);
 
-  return {
+  const normalizedIncident: Omit<Incident, "timeline"> = {
     ...baseIncident,
     stakeholderSummary:
       typeof baseIncident.stakeholderSummary === "string" && baseIncident.stakeholderSummary.trim()
@@ -191,6 +204,14 @@ function normalizeIncident(incident: Incident): Incident {
               timestamp: updatedAt,
             },
           ],
+  };
+
+  return {
+    ...normalizedIncident,
+    timeline:
+      Array.isArray(baseIncident.timeline) && baseIncident.timeline.length > 0
+        ? sortTimeline(baseIncident.timeline)
+        : buildInitialTimeline(normalizedIncident),
   };
 }
 
@@ -259,10 +280,12 @@ export default function App() {
         if (incident.id !== id) return incident;
 
         const timestamp = new Date().toISOString();
+        const statusEvent = createStatusTimelineEvent(incident, status, incident.status, timestamp);
         return {
           ...incident,
           status,
           updatedAt: timestamp,
+          timeline: [statusEvent, ...getIncidentTimeline(incident)],
           auditTrail: [
             {
               action: "Status changed",

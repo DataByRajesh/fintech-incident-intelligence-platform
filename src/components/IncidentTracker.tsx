@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge, StatusBadge } from "./Badges";
+import { getIncidentTimeline } from "../logic/activityTimeline";
 import { isReconciliationRisk } from "../logic/incidentRules";
 import { buildPriorityMatrix } from "../logic/priorityMatrix";
 import { getSlaMetrics } from "../logic/slaMetrics";
@@ -451,11 +452,11 @@ function IncidentDetails({
       <article className="summary-panel compact">
         <h4>Activity timeline</h4>
         <div className="audit-list">
-          {incident.auditTrail.slice(0, 5).map((entry) => (
-            <div className="audit-item" key={`${entry.timestamp}-${entry.action}-${entry.status}`}>
-              <strong>{entry.action}: {entry.status}</strong>
-              <span>{new Date(entry.timestamp).toLocaleString("en-GB")} - {entry.actor}</span>
-              <p>{entry.note}</p>
+          {getIncidentTimeline(incident).slice(0, 6).map((entry) => (
+            <div className="audit-item" key={entry.id}>
+              <strong>{entry.label}</strong>
+              <span>{new Date(entry.timestamp).toLocaleString("en-GB")} - {entry.type}</span>
+              <p>{entry.description}</p>
             </div>
           ))}
         </div>

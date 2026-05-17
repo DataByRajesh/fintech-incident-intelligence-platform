@@ -33,6 +33,7 @@ describe("buildManagementReport", () => {
     expect(report.slaEscalationSummary.toLowerCase()).toContain("sla");
     expect(report.slaEscalationSummary.toLowerCase()).toContain("sla ageing");
     expect(report.slaAgeingSummary).toHaveProperty("breachedCount");
+    expect(report.activitySummary.summary.toLowerCase()).toContain("activity");
   });
 
   it("calculates customer impact and financial exposure", () => {
@@ -70,6 +71,7 @@ describe("buildManagementReport", () => {
     expect(reportText).toContain("Operational summary");
     expect(reportText).toContain("Reconciliation summary");
     expect(reportText).toContain("SLA/escalation summary");
+    expect(reportText).toContain("Activity summary");
     expect(reportText).toContain("Financial exposure summary");
     expect(href).toContain("data:text/plain");
     expect(decodeURIComponent(href)).toContain("Operational Management Report");

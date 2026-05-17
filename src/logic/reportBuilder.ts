@@ -1,3 +1,4 @@
+import { getIncidentTimeline } from "./activityTimeline";
 import { getRepeatedPatternInsights, isReconciliationRisk } from "./incidentRules";
 import { summarizeSlaMetrics } from "./slaMetrics";
 import { SEVERITIES, type Incident, type Severity } from "../types/incident";
@@ -13,6 +14,17 @@ export function buildManagementReport(incidents: Incident[]) {
   const slaRiskItems = incidents.filter((incident) => ["At Risk", "Breached", "Escalation Required"].includes(incident.slaStatus));
   const repeatedPatterns = getRepeatedPatternInsights(incidents);
   const slaAgeingSummary = summarizeSlaMetrics(incidents);
+  const timelineEvents = incidents.flatMap((incident) =>
+    getIncidentTimeline(incident).map((event) => ({ incident, event })),
+  );
+  const recentCriticalHighActivity = timelineEvents
+    .filter(({ incident }) => ["Critical", "High"].includes(incident.riskLabel))
+    .sort((a, b) => Date.parse(b.event.timestamp) - Date.parse(a.event.timestamp))
+    .slice(0, 3);
+  const latestStatusChanges = timelineEvents
+    .filter(({ event }) => event.type === "Status Updated")
+    .sort((a, b) => Date.parse(b.event.timestamp) - Date.parse(a.event.timestamp))
+    .slice(0, 3);
   const highestRisk = [...incidents].sort((a, b) => b.riskScore - a.riskScore)[0] ?? null;
   const severityBreakdown = SEVERITIES.map((severity) => ({
     severity,
@@ -29,6 +41,15 @@ export function buildManagementReport(incidents: Incident[]) {
     slaRiskItems,
     repeatedPatterns,
     slaAgeingSummary,
+    activitySummary: {
+      recentCriticalHighActivity,
+      latestStatusChanges,
+      followUpIncidents: highRiskOpen.slice(0, 3),
+      summary:
+        recentCriticalHighActivity.length > 0
+          ? `${recentCriticalHighActivity.length} recent critical/high-risk activity events are visible. ${latestStatusChanges.length} latest status changes are captured. ${highRiskOpen.length} incidents require follow-up.`
+          : "No recent critical/high-risk activity events are currently visible.",
+    },
     highestRisk,
     severityBreakdown,
     operationalSummary: `${incidents.length} demo incidents are under review, with ${highRiskOpen.length} open high-risk items and ${reconciliationIncidents.length} reconciliation-sensitive cases. The current estimated exposure is GBP ${totalExposure.toLocaleString("en-GB")}.`,
@@ -75,6 +96,7 @@ export function buildReportExport(incidents: Incident[]) {
       reconciliation: report.reconciliationSummary,
       slaEscalation: report.slaEscalationSummary,
       slaAgeing: report.slaAgeingSummary,
+      activity: report.activitySummary.summary,
       customerImpact: report.customerImpactSummary,
       financialExposure: report.financialExposureSummary,
       managementUpdate: report.managementUpdate,
@@ -122,6 +144,9 @@ export function buildReportText(incidents: Incident[]) {
     "",
     "SLA/escalation summary",
     report.slaEscalationSummary,
+    "",
+    "Activity summary",
+    report.activitySummary.summary,
     "",
     "Customer impact summary",
     report.customerImpactSummary,

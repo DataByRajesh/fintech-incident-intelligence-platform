@@ -107,6 +107,11 @@ export function Reports({ incidents }: ReportsProps) {
           <p className="muted-copy">{report.slaEscalationSummary}</p>
         </article>
 
+        <article className="panel span-panel">
+          <h3>Activity summary</h3>
+          <p className="muted-copy">{report.activitySummary.summary}</p>
+        </article>
+
         <article className="panel">
           <h3>Customer impact summary</h3>
           <p className="muted-copy">{report.customerImpactSummary}</p>

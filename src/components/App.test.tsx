@@ -74,6 +74,8 @@ describe("App", () => {
     await user.selectOptions(screen.getByLabelText(/Update status for FIN-/), "Resolved");
 
     expect(screen.getByText(/status updated to Resolved/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Activity timeline" })).toBeInTheDocument();
+    expect(screen.getByText("Status updated")).toBeInTheDocument();
   });
 
   it("loads a selected demo scenario into the shared incident views", async () => {

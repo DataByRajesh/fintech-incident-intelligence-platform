@@ -128,7 +128,8 @@ describe("IncidentTracker", () => {
 
     expect(onUpdateStatus).toHaveBeenCalledWith(demoIncidents[0].id, "Resolved");
     expect(screen.getByRole("heading", { name: "Activity timeline" })).toBeInTheDocument();
-    expect(within(screen.getByText("Activity timeline").closest("article")!).getByText("Created: New")).toBeInTheDocument();
+    expect(within(screen.getByText("Activity timeline").closest("article")!).getByText("Incident created")).toBeInTheDocument();
+    expect(within(screen.getByText("Activity timeline").closest("article")!).getByText("Severity classified")).toBeInTheDocument();
   });
 
   it("calls owner assignment callback from the detail view", async () => {

@@ -10,6 +10,7 @@ import type {
   SlaStatus,
   WorkaroundAvailability,
 } from "../types/incident";
+import { buildInitialTimeline } from "./activityTimeline";
 
 const impactScores: Record<ImpactLevel, number> = {
   Low: 20,
@@ -410,7 +411,7 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
   const partialIncident = { category, riskLabel, riskScore, slaStatus, severity };
   const playbook = getInvestigationPlaybook(category);
 
-  return {
+  const incident: Omit<Incident, "timeline"> = {
     ...draft,
     id: createIncidentId(),
     reference: `FIN-${String(existingCount + 1).padStart(4, "0")}`,
@@ -419,7 +420,7 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
     riskScore,
     riskLabel,
     slaStatus,
-    status: "New",
+    status: "New" as const,
     stakeholderSummary: generateStakeholderSummary(draft, partialIncident),
     businessImpactReasoning: generateBusinessImpactReasoning(draft, partialIncident),
     investigationPlaybook: playbook.steps,
@@ -440,5 +441,10 @@ export function createIncident(draft: IncidentDraft, existingCount: number): Inc
     ],
     createdAt: now,
     updatedAt: now,
+  };
+
+  return {
+    ...incident,
+    timeline: buildInitialTimeline(incident),
   };
 }

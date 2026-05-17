@@ -13,6 +13,7 @@ describe("Reports", () => {
     expect(screen.getByRole("heading", { name: "Severity breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Reconciliation summary" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "SLA/escalation summary" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Activity summary" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Customer impact summary" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Financial exposure" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Management update" })).toBeInTheDocument();
@@ -27,6 +28,7 @@ describe("Reports", () => {
     expect(screen.getAllByText(/Reconciliation Mismatch/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/incidents have SLA risk/i)).toBeInTheDocument();
     expect(screen.getByText(/SLA ageing shows/i)).toBeInTheDocument();
+    expect(screen.getByText(/critical\/high-risk activity/i)).toBeInTheDocument();
     expect(screen.getByText(/FIN-0003: Duplicate customer debit investigation/i)).toBeInTheDocument();
     expect(screen.getAllByText(/GBP 1,855,800/i).length).toBeGreaterThan(0);
   });
