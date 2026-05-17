@@ -469,6 +469,17 @@ textarea:focus {
   color: #5c6d80;
 }
 
+.disabled-reason p {
+  margin: 0 0 8px;
+}
+
+.disabled-reason ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 20px;
+}
+
 .disclaimer-message {
   background: #f7fafc;
   border: 1px solid #dbe4ed;

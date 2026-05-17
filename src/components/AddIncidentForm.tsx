@@ -239,9 +239,14 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
         </div>
 
         {!canSubmit ? (
-          <p className="disabled-reason" id="submit-disabled-reason">
-            Submit is available after the required incident details are complete.
-          </p>
+          <div className="disabled-reason" id="submit-disabled-reason">
+            <p>Submit is available after the required incident details are complete.</p>
+            <ul>
+              {missingFields.map(([label]) => (
+                <li key={label}>Add {label}.</li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         <div className="form-actions">
           <button

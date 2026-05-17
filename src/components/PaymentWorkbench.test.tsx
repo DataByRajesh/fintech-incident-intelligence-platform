@@ -9,6 +9,9 @@ describe("Payment Incident Triage & Reconciliation Workbench", () => {
 
     expect(screen.getByRole("button", { name: /classify incident/i })).toBeDisabled();
     expect(screen.getByText(/submit is available after/i)).toBeInTheDocument();
+    expect(screen.getByText(/add title/i)).toBeInTheDocument();
+    expect(screen.getByText(/add description/i)).toBeInTheDocument();
+    expect(screen.getByText(/add owner\/team/i)).toBeInTheDocument();
     expect(screen.getByText(/do not enter real customer/i)).toBeInTheDocument();
   });
 
