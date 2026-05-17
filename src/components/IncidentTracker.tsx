@@ -298,7 +298,7 @@ function IncidentDetails({
           <dd><StatusBadge label={incident.status} /></dd>
         </div>
         <div>
-          <dt>SLA status</dt>
+          <dt>SLA risk</dt>
           <dd><SlaBadge label={incident.slaStatus} /></dd>
         </div>
         <div>

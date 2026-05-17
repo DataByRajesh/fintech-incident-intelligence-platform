@@ -60,6 +60,24 @@ describe("IncidentTracker", () => {
     expect(within(trackerTable).queryByText("FIN-0003")).not.toBeInTheDocument();
   });
 
+  it("sorts incidents by SLA risk", async () => {
+    const user = userEvent.setup();
+    render(
+      <IncidentTracker
+        incidents={demoIncidents}
+        selectedIncidentId={null}
+        onSelectIncident={vi.fn()}
+        onUpdateStatus={vi.fn()}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Sort by"), "SLA risk");
+
+    const trackerRows = within(screen.getByRole("table")).getAllByRole("button");
+    expect(trackerRows[0]).toHaveTextContent(/Escalation Required/);
+    expect(trackerRows[0]).toHaveTextContent(/FIN-0003|FIN-0007|FIN-0008/);
+  });
+
   it("opens a detail view and displays key incident fields", async () => {
     const user = userEvent.setup();
     function TrackerHarness() {
@@ -80,6 +98,7 @@ describe("IncidentTracker", () => {
 
     expect(screen.getByRole("heading", { name: "Card transaction reconciliation mismatch" })).toBeInTheDocument();
     expect(screen.getByText("Incident summary")).toBeInTheDocument();
+    expect(screen.getAllByText("SLA risk").length).toBeGreaterThan(1);
     expect(screen.getByText("Customer/regulatory impact")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Reporting note" })).toBeInTheDocument();
   });
