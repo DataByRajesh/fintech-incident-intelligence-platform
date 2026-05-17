@@ -72,6 +72,13 @@ export function IncidentTracker({
   }, [incidents, paymentFilter, query, severityFilter, sortMode, statusFilter]);
   const selectedIncident =
     incidents.find((incident) => incident.id === selectedIncidentId) ?? filteredIncidents[0] ?? incidents[0] ?? null;
+  const reconciliationIncidents = incidents.filter(isReconciliationRisk);
+  const slaEscalationIncidents = incidents.filter(
+    (incident) =>
+      incident.slaStatus !== "On Track" ||
+      incident.status === "Escalated" ||
+      incident.escalationRequirement.toLowerCase().includes("escalation"),
+  );
 
   function handleStatusChange(status: IncidentStatus) {
     if (!selectedIncident) {
@@ -156,13 +163,13 @@ export function IncidentTracker({
       <div className="dashboard-grid tracker-summary-grid">
         <RiskView
           title="Reconciliation Risk View"
-          incidents={incidents.filter(isReconciliationRisk)}
+          incidents={reconciliationIncidents}
           mode="reconciliation"
           emptyCopy="No reconciliation-sensitive incidents are currently open for review."
         />
         <RiskView
           title="SLA & Escalation View"
-          incidents={incidents.filter((incident) => incident.slaStatus !== "On Track" || incident.status === "Escalated")}
+          incidents={slaEscalationIncidents}
           mode="sla"
           emptyCopy="No incidents currently require SLA or escalation attention."
         />
@@ -426,10 +433,66 @@ function RiskView({
   mode: "reconciliation" | "sla";
 }) {
   const topIncidents = [...incidents].sort((a, b) => b.riskScore - a.riskScore).slice(0, 3);
+  const reconciliationSummary =
+    mode === "reconciliation"
+      ? [
+          {
+            label: "Reconciliation mismatch cases",
+            incidents: incidents.filter((incident) => incident.category === "Reconciliation Mismatch"),
+          },
+          {
+            label: "Duplicate debit cases",
+            incidents: incidents.filter((incident) => incident.category === "Duplicate Debit"),
+          },
+          {
+            label: "Settlement/file exception cases",
+            incidents: incidents.filter((incident) =>
+              ["Settlement Delay", "File Processing Exception"].includes(incident.category),
+            ),
+          },
+          {
+            label: "High reconciliation priority cases",
+            incidents: incidents.filter((incident) =>
+              ["Critical reconciliation break", "High-priority reconciliation review"].includes(incident.reconciliationPriority),
+            ),
+          },
+        ]
+      : [];
+  const slaSummary =
+    mode === "sla"
+      ? [
+          {
+            label: "High SLA risk cases",
+            incidents: incidents.filter((incident) => ["Breached", "Escalation Required"].includes(incident.slaStatus)),
+          },
+          {
+            label: "Breached or urgent cases",
+            incidents: incidents.filter((incident) => incident.slaStatus === "Breached" || incident.slaStatus === "Escalation Required"),
+          },
+          {
+            label: "Incidents requiring escalation",
+            incidents: incidents.filter((incident) => incident.escalationRequirement.toLowerCase().includes("escalation")),
+          },
+        ]
+      : [];
 
   return (
     <article className="panel">
       <h3>{title}</h3>
+      {mode === "reconciliation" ? (
+        <div className="risk-summary-grid">
+          {reconciliationSummary.map((item) => (
+            <SummaryBucket key={item.label} label={item.label} incidents={item.incidents} />
+          ))}
+        </div>
+      ) : null}
+      {mode === "sla" ? (
+        <div className="risk-summary-grid">
+          {slaSummary.map((item) => (
+            <SummaryBucket key={item.label} label={item.label} incidents={item.incidents} />
+          ))}
+        </div>
+      ) : null}
       <div className="incident-list">
         {topIncidents.length > 0 ? (
           topIncidents.map((incident) => (
@@ -454,5 +517,17 @@ function RiskView({
         )}
       </div>
     </article>
+  );
+}
+
+function SummaryBucket({ label, incidents }: { label: string; incidents: Incident[] }) {
+  const sample = incidents[0];
+
+  return (
+    <div className="risk-summary-item">
+      <strong>{label}</strong>
+      <span>{incidents.length} cases</span>
+      {sample ? <small>{sample.reference}: {sample.category}</small> : <small>No cases currently visible</small>}
+    </div>
   );
 }

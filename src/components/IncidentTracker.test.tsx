@@ -122,7 +122,7 @@ describe("IncidentTracker", () => {
     expect(within(screen.getByText("Audit trail").closest("article")!).getByText("Created: New")).toBeInTheDocument();
   });
 
-  it("shows reconciliation and SLA escalation views with relevant actions", () => {
+  it("shows reconciliation view with relevant case categories and follow-up", () => {
     render(
       <IncidentTracker
         incidents={demoIncidents}
@@ -133,8 +133,28 @@ describe("IncidentTracker", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Reconciliation Risk View" })).toBeInTheDocument();
+    expect(screen.getByText("Reconciliation mismatch cases")).toBeInTheDocument();
+    expect(screen.getByText("Duplicate debit cases")).toBeInTheDocument();
+    expect(screen.getByText("Settlement/file exception cases")).toBeInTheDocument();
+    expect(screen.getByText("High reconciliation priority cases")).toBeInTheDocument();
     expect(screen.getAllByText(/suggested reconciliation follow-up/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows SLA escalation view with urgent cases, escalation path, and owner action", () => {
+    render(
+      <IncidentTracker
+        incidents={demoIncidents}
+        selectedIncidentId={null}
+        onSelectIncident={vi.fn()}
+        onUpdateStatus={vi.fn()}
+      />,
+    );
+
     expect(screen.getByRole("heading", { name: "SLA & Escalation View" })).toBeInTheDocument();
+    expect(screen.getByText("High SLA risk cases")).toBeInTheDocument();
+    expect(screen.getByText("Breached or urgent cases")).toBeInTheDocument();
+    expect(screen.getByText("Incidents requiring escalation")).toBeInTheDocument();
     expect(screen.getAllByText(/escalation path/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/owner action/i).length).toBeGreaterThan(0);
   });
 });
