@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "../App";
+import { getDemoScenario } from "../data/demoScenarios";
 
 describe("App", () => {
   beforeEach(() => {
@@ -73,5 +74,20 @@ describe("App", () => {
     await user.selectOptions(screen.getByLabelText(/Update status for FIN-/), "Resolved");
 
     expect(screen.getByText(/status updated to Resolved/i)).toBeInTheDocument();
+  });
+
+  it("loads a selected demo scenario into the shared incident views", async () => {
+    const user = userEvent.setup();
+    const scenario = getDemoScenario("executive");
+    render(<App />);
+
+    await user.selectOptions(screen.getByLabelText(/demo scenario/i), "executive");
+
+    expect(screen.getByText(/Executive escalation demo scenario loaded/i)).toBeInTheDocument();
+    expect(screen.getAllByText(String(scenario.incidents.length)).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "Incident Tracker" }));
+
+    expect(screen.getAllByText(scenario.incidents[0].title).length).toBeGreaterThan(0);
   });
 });

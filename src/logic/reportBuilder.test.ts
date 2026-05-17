@@ -4,6 +4,7 @@ import {
   buildManagementReport,
   buildReportExport,
   buildReportText,
+  createReportTextDownloadHref,
   getSeverityClassName,
   getSeverityPercentage,
 } from "./reportBuilder";
@@ -59,6 +60,7 @@ describe("buildManagementReport", () => {
   it("builds a structured report export payload", () => {
     const exportPayload = buildReportExport(demoIncidents);
     const reportText = buildReportText(demoIncidents);
+    const href = createReportTextDownloadHref(demoIncidents);
 
     expect(exportPayload.reportType).toBe("Operational incident management summary");
     expect(exportPayload.metrics.totalIncidents).toBe(demoIncidents.length);
@@ -67,5 +69,7 @@ describe("buildManagementReport", () => {
     expect(reportText).toContain("Reconciliation summary");
     expect(reportText).toContain("SLA/escalation summary");
     expect(reportText).toContain("Financial exposure summary");
+    expect(href).toContain("data:text/plain");
+    expect(decodeURIComponent(href)).toContain("Operational Management Report");
   });
 });

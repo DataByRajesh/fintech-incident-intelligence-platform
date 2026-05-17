@@ -16,6 +16,7 @@ import {
   getReportingNote,
 } from "./logic/incidentRules";
 import { demoIncidents } from "./data/demoIncidents";
+import { demoScenarios, getDemoScenario } from "./data/demoScenarios";
 import {
   INCIDENT_CATEGORIES,
   INCIDENT_STATUSES,
@@ -218,6 +219,7 @@ function loadIncidents(): Incident[] {
 export default function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [incidents, setIncidents] = useState<Incident[]>(loadIncidents);
+  const [scenarioId, setScenarioId] = useState("full");
   const [latestIncidentId, setLatestIncidentId] = useState<string | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
@@ -276,6 +278,44 @@ export default function App() {
     );
   }
 
+  function handleOwnerUpdate(id: string, ownerTeam: string) {
+    const nextOwner = ownerTeam.trim();
+    if (!nextOwner) return;
+
+    setIncidents((current) =>
+      current.map((incident) => {
+        if (incident.id !== id || incident.ownerTeam === nextOwner) return incident;
+
+        const timestamp = new Date().toISOString();
+        return {
+          ...incident,
+          ownerTeam: nextOwner,
+          updatedAt: timestamp,
+          auditTrail: [
+            {
+              action: "Owner changed",
+              status: incident.status,
+              actor: "Operations user",
+              note: `Owner/team changed from ${incident.ownerTeam} to ${nextOwner}.`,
+              timestamp,
+            },
+            ...incident.auditTrail,
+          ],
+        };
+      }),
+    );
+  }
+
+  function handleScenarioChange(id: string) {
+    const scenario = getDemoScenario(id);
+    setScenarioId(scenario.id);
+    setIncidents(scenario.incidents);
+    setLatestIncidentId(null);
+    setSelectedIncidentId(scenario.incidents[0]?.id ?? null);
+    setNotice(`${scenario.name} demo scenario loaded.`);
+    setScreen("dashboard");
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -301,6 +341,16 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <label className="scenario-selector">
+          Demo scenario
+          <select value={scenarioId} onChange={(event) => handleScenarioChange(event.target.value)}>
+            {demoScenarios.map((scenario) => (
+              <option key={scenario.id} value={scenario.id}>
+                {scenario.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </header>
 
       <main>
@@ -321,6 +371,7 @@ export default function App() {
             selectedIncidentId={selectedIncidentId}
             onSelectIncident={setSelectedIncidentId}
             onUpdateStatus={handleStatusUpdate}
+            onUpdateOwner={handleOwnerUpdate}
           />
         ) : null}
         {screen === "reports" ? <Reports incidents={incidents} /> : null}

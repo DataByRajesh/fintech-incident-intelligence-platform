@@ -45,4 +45,13 @@ describe("Reports", () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Operational Management Report"));
     expect(screen.getByText(/report copied to clipboard/i)).toBeInTheDocument();
   });
+
+  it("offers a downloadable text management report", () => {
+    render(<Reports incidents={demoIncidents} />);
+
+    const downloadLink = screen.getByRole("link", { name: /download \.txt/i });
+
+    expect(downloadLink).toHaveAttribute("download", "incident-management-report.txt");
+    expect(downloadLink).toHaveAttribute("href", expect.stringContaining("data:text/plain"));
+  });
 });

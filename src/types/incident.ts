@@ -81,7 +81,7 @@ export interface IncidentDraft extends RiskInputs {
 }
 
 export interface IncidentAuditEntry {
-  action: "Created" | "Status changed" | "Migrated";
+  action: "Created" | "Status changed" | "Owner changed" | "Migrated";
   status: IncidentStatus;
   actor: string;
   note: string;

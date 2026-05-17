@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge, StatusBadge } from "./Badges";
 import { isReconciliationRisk } from "../logic/incidentRules";
+import { buildPriorityMatrix } from "../logic/priorityMatrix";
+import { getSlaAgeing } from "../logic/slaAgeing";
 import {
   INCIDENT_STATUSES,
   SEVERITIES,
@@ -16,6 +18,7 @@ interface IncidentTrackerProps {
   selectedIncidentId: string | null;
   onSelectIncident: (id: string) => void;
   onUpdateStatus: (id: string, status: IncidentStatus) => void;
+  onUpdateOwner: (id: string, ownerTeam: string) => void;
 }
 
 type TrackerSort = "Severity" | "SLA risk";
@@ -41,6 +44,7 @@ export function IncidentTracker({
   selectedIncidentId,
   onSelectIncident,
   onUpdateStatus,
+  onUpdateOwner,
 }: IncidentTrackerProps) {
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
@@ -79,6 +83,11 @@ export function IncidentTracker({
       incident.status === "Escalated" ||
       incident.escalationRequirement.toLowerCase().includes("escalation"),
   );
+  const ownerTeams = useMemo(
+    () => Array.from(new Set(incidents.map((incident) => incident.ownerTeam).filter(Boolean))).sort(),
+    [incidents],
+  );
+  const priorityMatrix = useMemo(() => buildPriorityMatrix(incidents), [incidents]);
 
   function handleStatusChange(status: IncidentStatus) {
     if (!selectedIncident) {
@@ -175,6 +184,8 @@ export function IncidentTracker({
         />
       </div>
 
+      <PriorityHeatmap cells={priorityMatrix} />
+
       <div className="tracker-layout">
         <article className="panel tracker-table">
           <table>
@@ -225,7 +236,7 @@ export function IncidentTracker({
                       <RiskBadge label={incident.riskLabel} />
                     </td>
                     <td>
-                      <SlaBadge label={incident.slaStatus} />
+                      <SlaAgeingIndicator incident={incident} compact />
                     </td>
                     <td>
                       <StatusBadge label={incident.status} />
@@ -248,7 +259,12 @@ export function IncidentTracker({
           </table>
         </article>
 
-        <IncidentDetails incident={selectedIncident} onUpdateStatus={handleStatusChange} />
+        <IncidentDetails
+          incident={selectedIncident}
+          ownerTeams={ownerTeams}
+          onUpdateOwner={onUpdateOwner}
+          onUpdateStatus={handleStatusChange}
+        />
       </div>
     </section>
   );
@@ -256,9 +272,13 @@ export function IncidentTracker({
 
 function IncidentDetails({
   incident,
+  ownerTeams,
+  onUpdateOwner,
   onUpdateStatus,
 }: {
   incident: Incident | null;
+  ownerTeams: string[];
+  onUpdateOwner: (id: string, ownerTeam: string) => void;
   onUpdateStatus: (status: IncidentStatus) => void;
 }) {
   if (!incident) {
@@ -306,7 +326,7 @@ function IncidentDetails({
         </div>
         <div>
           <dt>SLA risk</dt>
-          <dd><SlaBadge label={incident.slaStatus} /></dd>
+          <dd><SlaAgeingIndicator incident={incident} /></dd>
         </div>
         <div>
           <dt>Reported by</dt>
@@ -352,6 +372,21 @@ function IncidentDetails({
           {INCIDENT_STATUSES.map((status) => (
             <option key={status} value={status}>
               {status}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="status-control">
+        Assign owner/team
+        <select
+          aria-label={`Assign owner/team for ${incident.reference}`}
+          value={incident.ownerTeam}
+          onChange={(event) => onUpdateOwner(incident.id, event.target.value)}
+        >
+          {ownerTeams.map((ownerTeam) => (
+            <option key={ownerTeam} value={ownerTeam}>
+              {ownerTeam}
             </option>
           ))}
         </select>
@@ -406,7 +441,7 @@ function IncidentDetails({
       </article>
 
       <article className="summary-panel compact">
-        <h4>Audit trail</h4>
+        <h4>Activity timeline</h4>
         <div className="audit-list">
           {incident.auditTrail.slice(0, 5).map((entry) => (
             <div className="audit-item" key={`${entry.timestamp}-${entry.action}-${entry.status}`}>
@@ -418,6 +453,41 @@ function IncidentDetails({
         </div>
       </article>
     </aside>
+  );
+}
+
+function SlaAgeingIndicator({ incident, compact = false }: { incident: Incident; compact?: boolean }) {
+  const ageing = getSlaAgeing(incident);
+
+  return (
+    <div className={compact ? "sla-ageing compact-ageing" : "sla-ageing"}>
+      <SlaBadge label={incident.slaStatus} />
+      <span>{ageing.ageLabel}</span>
+      <small>{ageing.countdownLabel}</small>
+    </div>
+  );
+}
+
+function PriorityHeatmap({ cells }: { cells: ReturnType<typeof buildPriorityMatrix> }) {
+  return (
+    <article className="panel span-panel priority-heatmap" aria-label="Risk heatmap">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Priority matrix</p>
+          <h3>Risk heatmap</h3>
+        </div>
+      </div>
+      <div className="heatmap-grid">
+        {cells.map((cell) => (
+          <div className="heatmap-cell" key={cell.label}>
+            <strong>{cell.label}</strong>
+            <span>{cell.count} incidents</span>
+            <p>{cell.summary}</p>
+            {cell.incidents[0] ? <small>{cell.incidents[0].reference}: {cell.incidents[0].ownerTeam}</small> : null}
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 

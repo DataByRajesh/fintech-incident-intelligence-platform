@@ -102,6 +102,21 @@ button:disabled {
   padding: 4px;
 }
 
+.scenario-selector {
+  min-width: 220px;
+}
+
+.scenario-selector select {
+  min-height: 38px;
+}
+
+.action-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .app-nav button,
 .text-action,
 .secondary-action,
@@ -336,6 +351,43 @@ main {
   color: #65758a;
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.priority-heatmap {
+  margin-bottom: 18px;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.heatmap-cell {
+  background: #f7fafc;
+  border: 1px solid #dbe4ed;
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  min-height: 132px;
+  padding: 13px;
+}
+
+.heatmap-cell strong {
+  color: var(--ink);
+}
+
+.heatmap-cell span {
+  color: var(--brand);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.heatmap-cell p,
+.heatmap-cell small {
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0;
 }
 
 .incident-row {
@@ -575,6 +627,24 @@ textarea:focus {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.sla-ageing {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.sla-ageing span,
+.sla-ageing small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.compact-ageing {
+  justify-items: start;
+  min-width: 155px;
 }
 
 .pattern-panel p,
@@ -906,12 +976,17 @@ dd {
     width: 100%;
   }
 
+  .scenario-selector {
+    width: 100%;
+  }
+
   .metric-grid,
   .result-grid,
   .intelligence-grid,
   .dashboard-grid,
   .tracker-layout,
-  .control-panel {
+  .control-panel,
+  .heatmap-grid {
     grid-template-columns: 1fr;
   }
 

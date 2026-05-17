@@ -3,6 +3,7 @@ import { RiskBadge, SeverityBadge, SlaBadge } from "./Badges";
 import {
   buildManagementReport,
   buildReportText,
+  createReportTextDownloadHref,
   getSeverityClassName,
   getSeverityPercentage,
 } from "../logic/reportBuilder";
@@ -15,6 +16,7 @@ interface ReportsProps {
 export function Reports({ incidents }: ReportsProps) {
   const report = buildManagementReport(incidents);
   const reportText = buildReportText(incidents);
+  const reportDownloadHref = createReportTextDownloadHref(incidents);
   const [copyStatus, setCopyStatus] = useState("");
 
   async function copyReport() {
@@ -33,9 +35,14 @@ export function Reports({ incidents }: ReportsProps) {
           <p className="eyebrow">Structured management reports</p>
           <h2>Reports</h2>
         </div>
-        <button className="secondary-action" onClick={copyReport} type="button">
-          Copy report
-        </button>
+        <div className="action-cluster">
+          <button className="secondary-action" onClick={copyReport} type="button">
+            Copy report
+          </button>
+          <a className="secondary-action" download="incident-management-report.txt" href={reportDownloadHref}>
+            Download .txt
+          </a>
+        </div>
       </div>
       {copyStatus ? <div className="success-message">{copyStatus}</div> : null}
 

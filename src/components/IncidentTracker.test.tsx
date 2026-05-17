@@ -12,12 +12,13 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
 
     expect(screen.getByText("Faster Payments settlement delay")).toBeInTheDocument();
-    expect(screen.getByText("Reconciliation priority")).toBeInTheDocument();
+    expect(screen.getAllByText("Reconciliation priority").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Recommended next action").length).toBeGreaterThan(0);
   });
 
@@ -28,6 +29,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
@@ -47,6 +49,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
@@ -67,6 +70,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
@@ -87,6 +91,7 @@ describe("IncidentTracker", () => {
           incidents={demoIncidents}
           selectedIncidentId={selectedIncidentId}
           onSelectIncident={setSelectedIncidentId}
+          onUpdateOwner={vi.fn()}
           onUpdateStatus={vi.fn()}
         />
       );
@@ -99,6 +104,7 @@ describe("IncidentTracker", () => {
     expect(screen.getByRole("heading", { name: "Card transaction reconciliation mismatch" })).toBeInTheDocument();
     expect(screen.getByText("Incident summary")).toBeInTheDocument();
     expect(screen.getAllByText("SLA risk").length).toBeGreaterThan(1);
+    expect(screen.getAllByText(/opened today/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Customer/regulatory impact")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Reporting note" })).toBeInTheDocument();
   });
@@ -111,6 +117,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={demoIncidents[0].id}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={onUpdateStatus}
       />,
     );
@@ -118,8 +125,42 @@ describe("IncidentTracker", () => {
     await user.selectOptions(screen.getByLabelText(`Update status for ${demoIncidents[0].reference}`), "Resolved");
 
     expect(onUpdateStatus).toHaveBeenCalledWith(demoIncidents[0].id, "Resolved");
-    expect(screen.getByRole("heading", { name: "Audit trail" })).toBeInTheDocument();
-    expect(within(screen.getByText("Audit trail").closest("article")!).getByText("Created: New")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Activity timeline" })).toBeInTheDocument();
+    expect(within(screen.getByText("Activity timeline").closest("article")!).getByText("Created: New")).toBeInTheDocument();
+  });
+
+  it("calls owner assignment callback from the detail view", async () => {
+    const user = userEvent.setup();
+    const onUpdateOwner = vi.fn();
+    render(
+      <IncidentTracker
+        incidents={demoIncidents}
+        selectedIncidentId={demoIncidents[0].id}
+        onSelectIncident={vi.fn()}
+        onUpdateOwner={onUpdateOwner}
+        onUpdateStatus={vi.fn()}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText(`Assign owner/team for ${demoIncidents[0].reference}`), "Finance Operations");
+
+    expect(onUpdateOwner).toHaveBeenCalledWith(demoIncidents[0].id, "Finance Operations");
+  });
+
+  it("shows the risk heatmap priority matrix", () => {
+    render(
+      <IncidentTracker
+        incidents={demoIncidents}
+        selectedIncidentId={null}
+        onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
+        onUpdateStatus={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Risk heatmap" })).toBeInTheDocument();
+    expect(screen.getByText("Critical SLA pressure")).toBeInTheDocument();
+    expect(screen.getAllByText("Reconciliation priority").length).toBeGreaterThan(0);
   });
 
   it("shows reconciliation view with relevant case categories and follow-up", () => {
@@ -128,6 +169,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
@@ -146,6 +188,7 @@ describe("IncidentTracker", () => {
         incidents={demoIncidents}
         selectedIncidentId={null}
         onSelectIncident={vi.fn()}
+        onUpdateOwner={vi.fn()}
         onUpdateStatus={vi.fn()}
       />,
     );
