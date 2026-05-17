@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge } from "./Badges";
 import {
   buildManagementReport,
-  createReportTextDownloadHref,
+  buildReportText,
   getSeverityClassName,
   getSeverityPercentage,
 } from "../logic/reportBuilder";
@@ -13,7 +14,17 @@ interface ReportsProps {
 
 export function Reports({ incidents }: ReportsProps) {
   const report = buildManagementReport(incidents);
-  const exportHref = createReportTextDownloadHref(incidents);
+  const reportText = buildReportText(incidents);
+  const [copyStatus, setCopyStatus] = useState("");
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopyStatus("Report copied to clipboard.");
+    } catch {
+      setCopyStatus("Report copy is unavailable in this browser.");
+    }
+  }
 
   return (
     <section className="screen">
@@ -22,10 +33,11 @@ export function Reports({ incidents }: ReportsProps) {
           <p className="eyebrow">Structured management reports</p>
           <h2>Reports</h2>
         </div>
-        <a className="secondary-action" download="incident-management-report.txt" href={exportHref}>
-          Download report
-        </a>
+        <button className="secondary-action" onClick={copyReport} type="button">
+          Copy report
+        </button>
       </div>
+      {copyStatus ? <div className="success-message">{copyStatus}</div> : null}
 
       <div className="metric-grid">
         <article className="metric-card">

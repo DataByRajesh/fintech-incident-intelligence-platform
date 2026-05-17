@@ -131,11 +131,6 @@ export function buildReportText(incidents: Incident[]) {
   ].join("\n");
 }
 
-export function createReportTextDownloadHref(incidents: Incident[]) {
-  const encoded = encodeURIComponent(buildReportText(incidents));
-  return `data:text/plain;charset=utf-8,${encoded}`;
-}
-
 export function getSeverityPercentage(count: number, total: number) {
   return total > 0 ? Math.round((count / total) * 100) : 0;
 }
