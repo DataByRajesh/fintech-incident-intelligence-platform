@@ -258,7 +258,7 @@ function RiskView({ title, incidents, emptyCopy }: { title: string; incidents: I
             <div className="incident-row" key={incident.id}>
               <div>
                 <strong>{incident.reference}: {incident.paymentType}</strong>
-                <span>{incident.category} · {incident.ownerTeam}</span>
+                <span>{incident.category} - {incident.ownerTeam}</span>
                 <span>{incident.recommendedAction}</span>
               </div>
               <div className="row-badges">

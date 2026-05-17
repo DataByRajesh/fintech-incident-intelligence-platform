@@ -5,15 +5,12 @@ const impactOptions: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
 const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
 const paymentTypeOptions: PaymentType[] = [
   "Faster Payments",
-  "Card Payments",
-  "Open Banking",
   "BACS",
   "CHAPS",
-  "SEPA",
+  "Card",
+  "Open Banking",
   "SWIFT",
-  "Chargeback",
-  "Internal Ledger",
-  "Other",
+  "SEPA",
 ];
 
 const emptyDraft: IncidentDraft = {
@@ -242,9 +239,8 @@ export function AddIncidentForm({ onSubmit }: AddIncidentFormProps) {
           aria-describedby={!canSubmit ? "submit-disabled-reason" : undefined}
           className="primary-action"
           disabled={!canSubmit}
-          onClick={submitDraft}
           title={!canSubmit ? "Complete the required incident details before classifying." : "Classify incident"}
-          type="button"
+          type="submit"
         >
           Classify incident
         </button>

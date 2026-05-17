@@ -1,5 +1,6 @@
 import { RiskBadge, SlaBadge, StatusBadge } from "./Badges";
-import { getRepeatedPatternInsights, isReconciliationRisk } from "../logic/incidentRules";
+import { buildDashboardMetrics } from "../logic/dashboardMetrics";
+import { getRepeatedPatternInsights } from "../logic/incidentRules";
 import type { Incident } from "../types/incident";
 
 interface DashboardProps {
@@ -9,18 +10,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
-  const openIncidents = incidents.filter((incident) => !["Resolved", "Closed"].includes(incident.status));
-  const criticalOrHighRisks = incidents.filter((incident) => ["Critical", "High"].includes(incident.riskLabel)).length;
-  const breachedOrEscalated = incidents.filter((incident) =>
-    ["Breached", "Escalation Required"].includes(incident.slaStatus),
-  ).length;
-  const reconciliationBreaks = incidents.filter(isReconciliationRisk).length;
-  const estimatedExposure = incidents.reduce((total, incident) => total + incident.estimatedFinancialImpact, 0);
-  const affectedCustomers = incidents.reduce((total, incident) => total + incident.affectedCustomers, 0);
-  const latest = [...incidents]
-    .filter((incident) => ["Critical", "High"].includes(incident.riskLabel))
-    .sort((a, b) => b.riskScore - a.riskScore || Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, 5);
+  const metrics = buildDashboardMetrics(incidents);
   const repeatedPattern = getRepeatedPatternInsights(incidents)[0];
 
   return (
@@ -39,35 +29,35 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
       <div className="metric-grid">
         <article className="metric-card">
           <span>Total incidents</span>
-          <strong>{incidents.length}</strong>
+          <strong>{metrics.totalIncidents}</strong>
         </article>
         <article className="metric-card">
           <span>Critical/high incidents</span>
-          <strong>{criticalOrHighRisks}</strong>
+          <strong>{metrics.criticalHighIncidents}</strong>
         </article>
         <article className="metric-card">
           <span>Open incidents</span>
-          <strong>{openIncidents.length}</strong>
+          <strong>{metrics.openIncidents}</strong>
         </article>
         <article className="metric-card">
           <span>SLA risk</span>
-          <strong>{breachedOrEscalated}</strong>
+          <strong>{metrics.slaRiskCount}</strong>
         </article>
         <article className="metric-card">
           <span>Reconciliation breaks</span>
-          <strong>{reconciliationBreaks}</strong>
+          <strong>{metrics.reconciliationBreaks}</strong>
         </article>
         <article className="metric-card">
           <span>Estimated exposure</span>
-          <strong>GBP {estimatedExposure.toLocaleString("en-GB")}</strong>
+          <strong>GBP {metrics.estimatedFinancialExposure.toLocaleString("en-GB")}</strong>
         </article>
         <article className="metric-card">
           <span>Affected customers</span>
-          <strong>{affectedCustomers.toLocaleString("en-GB")}</strong>
+          <strong>{metrics.affectedCustomerTotal.toLocaleString("en-GB")}</strong>
         </article>
         <article className="metric-card">
           <span>High-risk open</span>
-          <strong>{openIncidents.filter((incident) => ["Critical", "High"].includes(incident.riskLabel)).length}</strong>
+          <strong>{metrics.highRiskOpenIncidents}</strong>
         </article>
       </div>
 
@@ -99,13 +89,13 @@ export function Dashboard({ incidents, onNavigate, notice }: DashboardProps) {
             </button>
           </div>
           <div className="incident-list">
-            {latest.length > 0 ? (
-              latest.map((incident) => (
+            {metrics.recentHighRiskIncidents.length > 0 ? (
+              metrics.recentHighRiskIncidents.map((incident) => (
                 <div className="incident-row" key={incident.id}>
                   <div>
                     <strong>{incident.reference}</strong>
-                    <span>{incident.title} · {incident.paymentType}</span>
-                    <span>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")} exposure · {incident.affectedCustomers} customers</span>
+                    <span>{incident.title} - {incident.paymentType}</span>
+                    <span>GBP {incident.estimatedFinancialImpact.toLocaleString("en-GB")} exposure - {incident.affectedCustomers} customers</span>
                   </div>
                   <div className="row-badges">
                     <RiskBadge label={incident.riskLabel} />

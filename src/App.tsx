@@ -37,15 +37,12 @@ const impactLevels: ImpactLevel[] = ["Low", "Medium", "High", "Critical"];
 const workaroundOptions: WorkaroundAvailability[] = ["Available", "Partial", "Unavailable"];
 const paymentTypes: PaymentType[] = [
   "Faster Payments",
-  "Card Payments",
-  "Open Banking",
   "BACS",
   "CHAPS",
-  "SEPA",
+  "Card",
+  "Open Banking",
   "SWIFT",
-  "Chargeback",
-  "Internal Ledger",
-  "Other",
+  "SEPA",
 ];
 
 function isOneOf<T extends string>(value: unknown, options: readonly T[]): value is T {
@@ -95,7 +92,7 @@ function isBaseIncident(value: unknown): value is Incident {
 function normalizeIncident(incident: Incident): Incident {
   const baseIncident = {
     ...incident,
-    paymentType: incident.paymentType ?? "Other",
+    paymentType: incident.paymentType ?? "Faster Payments",
     incidentCategory: incident.incidentCategory ?? incident.category,
     affectedCustomers: Number.isFinite(incident.affectedCustomers) ? incident.affectedCustomers : 1,
     transactionCount: Number.isFinite(incident.transactionCount) ? incident.transactionCount : 1,
@@ -225,6 +222,7 @@ export default function App() {
             ["reports", "Reports"],
           ].map(([key, label]) => (
             <button
+              aria-current={screen === key ? "page" : undefined}
               className={screen === key ? "active" : ""}
               key={key}
               onClick={() => navigate(key as Screen)}

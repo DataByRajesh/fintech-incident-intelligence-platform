@@ -50,15 +50,12 @@ export type ImpactLevel = "Low" | "Medium" | "High" | "Critical";
 export type WorkaroundAvailability = "Available" | "Partial" | "Unavailable";
 export type PaymentType =
   | "Faster Payments"
-  | "Card Payments"
-  | "Open Banking"
   | "BACS"
   | "CHAPS"
-  | "SEPA"
+  | "Card"
+  | "Open Banking"
   | "SWIFT"
-  | "Chargeback"
-  | "Internal Ledger"
-  | "Other";
+  | "SEPA";
 
 export interface RiskInputs {
   customerImpact: ImpactLevel;

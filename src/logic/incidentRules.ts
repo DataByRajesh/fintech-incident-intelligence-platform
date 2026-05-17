@@ -281,6 +281,13 @@ export function calculateRiskScore(input: IncidentDraft): number {
     (categoryScores[category] ?? 50) * 0.04 +
     workaroundScores[input.workaroundAvailability] * 0.02;
 
+  if (
+    ["High-Value Payment Delay", "Suspicious Transaction Alert", "Duplicate Debit"].includes(category) &&
+    (input.estimatedFinancialImpact >= 250000 || input.slaUrgency === "Critical" || input.complianceSensitivity === "Critical")
+  ) {
+    return Math.max(86, clampScore(score));
+  }
+
   return clampScore(score);
 }
 
@@ -346,7 +353,7 @@ export function getReconciliationPriority(incident: Pick<Incident, "category" | 
 }
 
 export function getReportingNote(input: IncidentDraft, incident: Pick<Incident, "category" | "riskScore" | "slaStatus">): string {
-  return `${incident.category} on ${input.paymentType}: ${input.transactionCount} transactions, ${input.affectedCustomers} affected customers, estimated exposure GBP ${input.estimatedFinancialImpact.toLocaleString("en-GB")}, SLA status "${incident.slaStatus}", risk score ${incident.riskScore}/100.`;
+  return `${incident.category} on ${input.paymentType}: ${input.transactionCount.toLocaleString("en-GB")} transactions, ${input.affectedCustomers.toLocaleString("en-GB")} affected customers, estimated exposure GBP ${input.estimatedFinancialImpact.toLocaleString("en-GB")}, SLA status "${incident.slaStatus}", risk score ${incident.riskScore}/100.`;
 }
 
 export function generateStakeholderSummary(
