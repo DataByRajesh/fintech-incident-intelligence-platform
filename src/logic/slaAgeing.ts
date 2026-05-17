@@ -4,6 +4,7 @@ export interface SlaAgeing {
   ageDays: number;
   ageLabel: string;
   countdownLabel: string;
+  escalationTimingLabel: string;
   urgencyLabel: string;
 }
 
@@ -33,6 +34,7 @@ export function getSlaAgeing(incident: Pick<Incident, "createdAt" | "slaStatus">
       incident.slaStatus === "Breached" || incident.slaStatus === "Escalation Required"
         ? "Immediate action required"
         : `Next checkpoint within ${Math.max(1, remainingHours)} hours`,
+    escalationTimingLabel: getEscalationTimingLabel(incident.slaStatus, Math.max(1, remainingHours)),
     urgencyLabel: getSlaUrgencyLabel(incident.slaStatus),
   };
 }
@@ -42,4 +44,11 @@ export function getSlaUrgencyLabel(slaStatus: SlaStatus) {
   if (slaStatus === "Breached") return "SLA breached";
   if (slaStatus === "At Risk") return "SLA at risk";
   return "SLA on track";
+}
+
+export function getEscalationTimingLabel(slaStatus: SlaStatus, remainingHours: number) {
+  if (slaStatus === "Escalation Required") return "Escalate immediately";
+  if (slaStatus === "Breached") return "Escalate now and confirm recovery owner";
+  if (slaStatus === "At Risk") return `Escalate if not recovered within ${remainingHours} hours`;
+  return `Review at next checkpoint within ${remainingHours} hours`;
 }

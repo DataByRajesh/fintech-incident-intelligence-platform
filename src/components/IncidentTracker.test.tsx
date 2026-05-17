@@ -197,6 +197,9 @@ describe("IncidentTracker", () => {
     expect(screen.getByText("High SLA risk cases")).toBeInTheDocument();
     expect(screen.getByText("Breached or urgent cases")).toBeInTheDocument();
     expect(screen.getByText("Incidents requiring escalation")).toBeInTheDocument();
+    expect(screen.getAllByText(/opened today/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/immediate action required/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/escalate immediately|confirm recovery owner/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/escalation path/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/owner action/i).length).toBeGreaterThan(0);
   });

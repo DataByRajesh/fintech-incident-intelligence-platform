@@ -464,6 +464,7 @@ function SlaAgeingIndicator({ incident, compact = false }: { incident: Incident;
       <SlaBadge label={incident.slaStatus} />
       <span>{ageing.ageLabel}</span>
       <small>{ageing.countdownLabel}</small>
+      <small>{ageing.escalationTimingLabel}</small>
     </div>
   );
 }
@@ -570,6 +571,7 @@ function RiskView({
               <div>
                 <strong>{incident.reference}: {incident.paymentType}</strong>
                 <span>{incident.category} - {incident.ownerTeam}</span>
+                {mode === "sla" ? <SlaAgeingIndicator incident={incident} compact /> : null}
                 <span>
                   {mode === "reconciliation"
                     ? `Suggested reconciliation follow-up: ${incident.reconciliationPriority}. ${incident.recommendedAction}`
