@@ -31,6 +31,8 @@ describe("buildManagementReport", () => {
     expect(report.reconciliationIncidents.length).toBeGreaterThan(0);
     expect(report.reconciliationSummary.toLowerCase()).toContain("reconciliation");
     expect(report.slaEscalationSummary.toLowerCase()).toContain("sla");
+    expect(report.slaEscalationSummary.toLowerCase()).toContain("sla ageing");
+    expect(report.slaAgeingSummary).toHaveProperty("breachedCount");
   });
 
   it("calculates customer impact and financial exposure", () => {

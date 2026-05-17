@@ -26,6 +26,7 @@ describe("Reports", () => {
     expect(screen.getByText(String(demoIncidents.length))).toBeInTheDocument();
     expect(screen.getAllByText(/Reconciliation Mismatch/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/incidents have SLA risk/i)).toBeInTheDocument();
+    expect(screen.getByText(/SLA ageing shows/i)).toBeInTheDocument();
     expect(screen.getByText(/FIN-0003: Duplicate customer debit investigation/i)).toBeInTheDocument();
     expect(screen.getAllByText(/GBP 1,855,800/i).length).toBeGreaterThan(0);
   });

@@ -1,4 +1,5 @@
 import { getRepeatedPatternInsights, isReconciliationRisk } from "./incidentRules";
+import { summarizeSlaMetrics } from "./slaMetrics";
 import { SEVERITIES, type Incident, type Severity } from "../types/incident";
 
 export function buildManagementReport(incidents: Incident[]) {
@@ -11,6 +12,7 @@ export function buildManagementReport(incidents: Incident[]) {
   const escalationItems = incidents.filter((incident) => incident.slaStatus === "Escalation Required");
   const slaRiskItems = incidents.filter((incident) => ["At Risk", "Breached", "Escalation Required"].includes(incident.slaStatus));
   const repeatedPatterns = getRepeatedPatternInsights(incidents);
+  const slaAgeingSummary = summarizeSlaMetrics(incidents);
   const highestRisk = [...incidents].sort((a, b) => b.riskScore - a.riskScore)[0] ?? null;
   const severityBreakdown = SEVERITIES.map((severity) => ({
     severity,
@@ -26,6 +28,7 @@ export function buildManagementReport(incidents: Incident[]) {
     escalationItems,
     slaRiskItems,
     repeatedPatterns,
+    slaAgeingSummary,
     highestRisk,
     severityBreakdown,
     operationalSummary: `${incidents.length} demo incidents are under review, with ${highRiskOpen.length} open high-risk items and ${reconciliationIncidents.length} reconciliation-sensitive cases. The current estimated exposure is GBP ${totalExposure.toLocaleString("en-GB")}.`,
@@ -35,7 +38,7 @@ export function buildManagementReport(incidents: Incident[]) {
         : "No reconciliation-sensitive incidents are currently present.",
     slaEscalationSummary:
       slaRiskItems.length > 0
-        ? `${slaRiskItems.length} incidents have SLA risk, including ${escalationItems.length} requiring formal escalation.`
+        ? `${slaRiskItems.length} incidents have SLA risk, including ${escalationItems.length} requiring formal escalation. SLA ageing shows ${slaAgeingSummary.breachedCount} breached and ${slaAgeingSummary.atRiskCount} at-risk active incidents. Next escalation: ${slaAgeingSummary.nextEscalationRecommendation}`
         : "No incidents currently show SLA or escalation pressure.",
     customerImpactSummary: `Total affected customers: ${affectedCustomers.toLocaleString("en-GB")}. Highest customer exposure: ${Math.max(0, ...incidents.map((incident) => incident.affectedCustomers)).toLocaleString("en-GB")} customers on a single incident.`,
     financialExposureSummary:
@@ -63,12 +66,15 @@ export function buildReportExport(incidents: Incident[]) {
       affectedCustomers: report.affectedCustomers,
       highRiskOpen: report.highRiskOpen.length,
       escalationRequired: report.escalationItems.length,
+      slaAgeingBreached: report.slaAgeingSummary.breachedCount,
+      slaAgeingAtRisk: report.slaAgeingSummary.atRiskCount,
       reconciliationSensitive: report.reconciliationIncidents.length,
     },
     summaries: {
       operational: report.operationalSummary,
       reconciliation: report.reconciliationSummary,
       slaEscalation: report.slaEscalationSummary,
+      slaAgeing: report.slaAgeingSummary,
       customerImpact: report.customerImpactSummary,
       financialExposure: report.financialExposureSummary,
       managementUpdate: report.managementUpdate,

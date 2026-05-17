@@ -78,8 +78,8 @@ describe("IncidentTracker", () => {
     await user.selectOptions(screen.getByLabelText("Sort by"), "SLA risk");
 
     const trackerRows = within(screen.getByRole("table")).getAllByRole("button");
-    expect(trackerRows[0]).toHaveTextContent(/Escalation Required/);
     expect(trackerRows[0]).toHaveTextContent(/FIN-0003|FIN-0007|FIN-0008/);
+    expect(trackerRows[0]).toHaveTextContent(/target/);
   });
 
   it("opens a detail view and displays key incident fields", async () => {
@@ -104,7 +104,9 @@ describe("IncidentTracker", () => {
     expect(screen.getByRole("heading", { name: "Card transaction reconciliation mismatch" })).toBeInTheDocument();
     expect(screen.getByText("Incident summary")).toBeInTheDocument();
     expect(screen.getAllByText("SLA risk").length).toBeGreaterThan(1);
-    expect(screen.getAllByText(/opened today/i).length).toBeGreaterThan(0);
+    expect(screen.getByText("Created")).toBeInTheDocument();
+    expect(screen.getByText("SLA target")).toBeInTheDocument();
+    expect(screen.getAllByText(/target/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Customer/regulatory impact")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Reporting note" })).toBeInTheDocument();
   });
@@ -197,9 +199,8 @@ describe("IncidentTracker", () => {
     expect(screen.getByText("High SLA risk cases")).toBeInTheDocument();
     expect(screen.getByText("Breached or urgent cases")).toBeInTheDocument();
     expect(screen.getByText("Incidents requiring escalation")).toBeInTheDocument();
-    expect(screen.getAllByText(/opened today/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/immediate action required/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/escalate immediately|confirm recovery owner/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/target/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/review within|escalate/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/escalation path/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/owner action/i).length).toBeGreaterThan(0);
   });

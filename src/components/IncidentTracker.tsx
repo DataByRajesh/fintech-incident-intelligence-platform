@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { RiskBadge, SeverityBadge, SlaBadge, StatusBadge } from "./Badges";
 import { isReconciliationRisk } from "../logic/incidentRules";
 import { buildPriorityMatrix } from "../logic/priorityMatrix";
-import { getSlaAgeing } from "../logic/slaAgeing";
+import { getSlaMetrics } from "../logic/slaMetrics";
 import {
   INCIDENT_STATUSES,
   SEVERITIES,
@@ -329,6 +329,14 @@ function IncidentDetails({
           <dd><SlaAgeingIndicator incident={incident} /></dd>
         </div>
         <div>
+          <dt>Created</dt>
+          <dd>{getSlaMetrics(incident).createdLabel}</dd>
+        </div>
+        <div>
+          <dt>SLA target</dt>
+          <dd>{getSlaMetrics(incident).targetLabel}</dd>
+        </div>
+        <div>
           <dt>Reported by</dt>
           <dd>{incident.reportedBy}</dd>
         </div>
@@ -457,14 +465,14 @@ function IncidentDetails({
 }
 
 function SlaAgeingIndicator({ incident, compact = false }: { incident: Incident; compact?: boolean }) {
-  const ageing = getSlaAgeing(incident);
+  const metrics = getSlaMetrics(incident);
 
   return (
     <div className={compact ? "sla-ageing compact-ageing" : "sla-ageing"}>
-      <SlaBadge label={incident.slaStatus} />
-      <span>{ageing.ageLabel}</span>
-      <small>{ageing.countdownLabel}</small>
-      <small>{ageing.escalationTimingLabel}</small>
+      <SlaBadge label={metrics.status} />
+      <span>{metrics.ageLabel}</span>
+      <small>{metrics.targetLabel}</small>
+      <small>{metrics.escalationTiming}</small>
     </div>
   );
 }
